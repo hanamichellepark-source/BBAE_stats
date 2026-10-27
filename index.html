@@ -164,6 +164,7 @@ textarea{width:100%;min-height:70px}
 .hide{display:none!important}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.lastupd{margin-top:10px;font-size:.84rem;color:var(--ink2);display:flex;align-items:center;gap:6px;flex-wrap:wrap}.lastupd .btn{padding:3px 8px;font-size:.78rem}
 .chart{width:100%;position:relative}
 .chart svg{display:block;overflow:visible}
 .chart .ax{font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums}
@@ -940,7 +941,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     async init() {
       try { const r = await fetch('cloud.json', { cache: 'no-store' }); if (r.ok) { const c = await r.json(); if (c.apiKey && c.projectId) this.cfg = c; } } catch (e) { }
       if (!this.cfg) { const c = ls.get('iw_cloud_cfg'); if (c) this.cfg = c; } else ls.set('iw_cloud_cfg', this.cfg);  // 오프라인으로 열어도 설정 기억
-      this.s = ls.get(SKEY); this.role = this.s && this.s.role || null;
+      this.s = ls.get(SKEY); this.role = this.s ? 'editor' : null;   // 로그인한 사람은 모두 사용 가능 (차단은 서버 규칙이 막음)
       if (this.cfg) await this.handleGoogleReturn();
     },
     hasGoogle() { return !!(this.cfg && this.cfg.googleClientId); },
@@ -1021,28 +1022,29 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         catch (e) { throw cerr('인터넷 연결을 확인해주세요', 'network'); }
         if (r.status === 401 && attempt === 0) { this.s.exp = 0; continue; }
         if (r.status === 404) return null;
-        if (r.status === 403) throw cerr('권한이 없어요 (등록되지 않았거나, 보기 전용 계정)', 'forbidden');
+        if (r.status === 403) throw cerr('권한이 없어요. 새 보안 규칙(firestore.rules)이 Firebase에 게시됐는지 확인해주세요', 'forbidden');
         if (!r.ok) { const j = await r.json().catch(() => ({})); throw cerr(`클라우드 오류 ${r.status}: ${(j.error && j.error.message) || ''}`, 'http'); }
         return r.json();
       }
     },
     async loadRole() {
-      const d = await this.req('GET', `/members/${encodeURIComponent(this.s.email)}`);
+      // 로그인한 사람은 누구나 사용(보기·올리기). Firebase members/{이메일} 에 role=blocked 를 넣은 사람만 차단
+      let d = null; try { d = await this.req('GET', `/members/${encodeURIComponent(this.s.email)}`); } catch (e) { if (e.code !== 'forbidden') throw e; }
       const role = d && d.fields && d.fields.role && d.fields.role.stringValue;
-      if (!role) throw cerr(`등록되지 않은 계정이에요 (${this.s.email}). 관리자가 Firebase → Firestore → members 에 이 이메일을 그대로 문서 ID로 추가하고 role 을 viewer 로 넣어야 해요`, 'notmember');
-      this.role = role === 'editor' ? 'editor' : 'viewer';
+      if (role === 'blocked') throw cerr(`사용이 막힌 계정이에요 (${this.s.email}). 관리자에게 문의해주세요`, 'blocked');
+      this.role = 'editor';
       this.s.role = this.role;
     },
 
     // ---- 읽기: 모든 달 문서를 받아 하나로 합침
     async pullAll() {
-      const records = {}; let token = '', meta = { docs: 0, updatedAt: null };
+      const records = {}, deleted = {}; let token = '', meta = { docs: 0, updatedAt: null };
       try { const mm = await this.pullMeta(); meta.version = mm.version || 0; meta.log = mm.log || []; } catch (e) { }
       do {
         const j = await this.req('GET', `/stats?pageSize=100${token ? '&pageToken=' + encodeURIComponent(token) : ''}`);
         for (const d of (j && j.documents) || []) {
           const f = d.fields || {};
-          try { Object.assign(records, JSON.parse(f.json.stringValue).records || {}); meta.docs++; } catch (e) { }
+          try { const o = JSON.parse(f.json.stringValue); Object.assign(records, o.records || {}); Object.assign(deleted, o.deleted || {}); meta.docs++; } catch (e) { }
           const u = f.updatedAt && f.updatedAt.timestampValue; if (u && (!meta.updatedAt || u > meta.updatedAt)) meta.updatedAt = u;
         }
         token = j && j.nextPageToken || '';
@@ -1050,39 +1052,55 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       let settings = null;
       const c = await this.req('GET', '/config/settings');
       if (c && c.fields && c.fields.json) { try { settings = JSON.parse(c.fields.json.stringValue); } catch (e) { } }
-      return { records, settings, meta };
+      return { records, settings, meta, deleted };
     },
 
-    // ---- 쓰기: 바뀐 달만. 같은 날짜는 PC 쪽이 우선, 삭제한 날은 클라우드에서도 삭제
+    // ---- 쓰기: 바뀐 날만. 같은 날짜는 더 나중에 저장한 쪽이 이김, 삭제한 날은 삭제 기록을 남겨 다른 PC에서도 지움
     sanitize(r) {
       return {
         key: r.key, date: r.date, region: r.region, total: r.total, channels: r.channels, parts: r.parts, matrix: r.matrix,
         noPart: r.noPart, partExtra: r.partExtra, unknownParts: r.unknownParts, dupCount: r.dupCount,
         warnings: (r.warnings || []).filter(w => !/연락처/.test(w)),
         hasResv: r.hasResv, resv: r.resv, resvCh: r.resvCh, resvPt: r.resvPt, hasNotes: r.hasNotes, cost: r.cost, dateAsk: r.dateAsk, dupDB: r.dupDB,
-        empty: r.empty, savedAsZero: r.savedAsZero, parser: r.parser, savedAt: r.savedAt,
+        empty: r.empty, savedAsZero: r.savedAsZero, parser: r.parser, savedAt: r.savedAt, savedBy: r.savedBy, teamExtra: r.teamExtra,
         source: r.source ? { name: r.source.name, sheet: r.source.sheet, lastModified: r.source.lastModified } : null
       };
     },
     docId(month, region) { return `${month}_${region}`; },
-    async pushMonths(allRecords, monthKeys, deletedKeys) {
-      if (!this.isEditor()) throw cerr('편집자 계정으로 로그인해야 올릴 수 있어요', 'forbidden');
-      const del = new Set(deletedKeys || []);
+    async pushMonths(allRecords, monthKeys, deletedKeys, onlyKeys) {
+      if (!this.isEditor()) throw cerr('로그인해야 올릴 수 있어요', 'forbidden');
+      const del = new Set(deletedKeys || []), only = onlyKeys ? new Set(onlyKeys) : null;
       const now = new Date().toISOString();
-      let n = 0;
+      let n = 0, kept = 0;
       for (const mk of monthKeys) {
         const [month, region] = mk.split('|');
         const id = this.docId(month, region);
         const ex = await this.req('GET', `/stats/${id}`);
-        let remote = {};
-        if (ex && ex.fields && ex.fields.json) { try { remote = JSON.parse(ex.fields.json.stringValue).records || {}; } catch (e) { } }
-        const merged = Object.assign({}, remote);
-        for (const k of Object.keys(merged)) if (del.has(k)) delete merged[k];
-        for (const r of Object.values(allRecords)) if (r.region === region && r.date.startsWith(month)) merged[r.key] = this.sanitize(r);
-        await this.req('PATCH', `/stats/${id}`, { fields: { json: { stringValue: JSON.stringify({ month, region, records: merged }) }, updatedAt: { timestampValue: now }, by: { stringValue: this.email() } } });
+        let remote = {}, rdel = {};
+        if (ex && ex.fields && ex.fields.json) { try { const o = JSON.parse(ex.fields.json.stringValue); remote = o.records || {}; rdel = o.deleted || {}; } catch (e) { } }
+        const merged = Object.assign({}, remote), mdel = Object.assign({}, rdel);
+        for (const k of Object.keys(merged)) if (del.has(k)) { delete merged[k]; mdel[k] = { at: now, by: this.email() }; }
+        for (const r of Object.values(allRecords)) {
+          if (r.region !== region || !r.date.startsWith(month)) continue;
+          if (only ? !only.has(r.key) : false) continue;
+          const rm = remote[r.key];
+          if (rm && rm.savedAt && r.savedAt && rm.savedAt > r.savedAt) { kept++; continue; }   // 다른 사람이 더 나중에 저장한 날은 덮어쓰지 않음
+          merged[r.key] = this.sanitize(r); delete mdel[r.key];
+        }
+        await this.req('PATCH', `/stats/${id}`, { fields: { json: { stringValue: JSON.stringify({ month, region, records: merged, deleted: mdel }) }, updatedAt: { timestampValue: now }, by: { stringValue: this.email() } } });
         n++;
       }
-      return n;
+      return { n, kept };
+    },
+    // 활동 기록: 추가만 가능(보안 규칙상 수정·삭제 불가) → 누가 언제 무엇을 했는지 남음
+    async logActivity(kind, note) {
+      if (!this.signedIn()) return;
+      const dev = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? '폰' : 'PC';
+      try { await this.req('POST', '/activity', { fields: { at: { timestampValue: new Date().toISOString() }, by: { stringValue: this.email() }, kind: { stringValue: kind }, note: { stringValue: String(note || '').slice(0, 300) }, device: { stringValue: dev } } }); } catch (e) { console.warn('activity', e); }
+    },
+    async pullActivity(limit = 60) {
+      const j = await this.req('POST', ':runQuery', { structuredQuery: { from: [{ collectionId: 'activity' }], orderBy: [{ field: { fieldPath: 'at' }, direction: 'DESCENDING' }], limit } });
+      return (Array.isArray(j) ? j : []).filter(x => x.document).map(x => { const f = x.document.fields || {}; const v = k => f[k] && (f[k].stringValue || f[k].timestampValue) || ''; return { at: v('at'), by: v('by'), kind: v('kind'), note: v('note'), device: v('device') }; });
     },
     async pullMeta() {
       const d = await this.req('GET', '/config/meta');
@@ -1108,7 +1126,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 (function () {
   'use strict';
   const { REGIONS } = IW;
-  const APP_VERSION = '2610271455';
+  const APP_VERSION = '2610271515';
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayStr = () => IW.fmtDate(new Date());
@@ -1194,7 +1212,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
   async function reload() {
     S.fromCache = null;
-    if (IWCloud.enabled() && IWCloud.signedIn() && IWCloud.role === 'viewer') { await loadCloudView(); return; }
+    if (IWCloud.enabled() && IWCloud.signedIn() && (IWCloud.role === 'viewer' || isViewDevice())) { await loadCloudView(); return; }
     S.source = 'local';
     try {
       const { records, settings, fromCache } = await IWStore.loadAll();
@@ -1212,6 +1230,29 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     renderPill(); render();
   }
 
+  // 폰·태블릿·사파리처럼 엑셀 폴더를 연결할 수 없는 기기는 보기 화면
+  function isViewDevice() { return !('showOpenFilePicker' in window) || window.matchMedia('(max-width:760px)').matches; }
+  /* PC: 다른 사람이 올린 최신 기록을 이 PC로 받아옴 (같은 날짜는 더 나중에 저장한 쪽, 지운 날은 지움) */
+  async function syncFromCloud(opts = {}) {
+    if (!IWCloud.enabled() || !IWCloud.signedIn() || S.source !== 'local') return null;
+    let pulled;
+    try { pulled = await IWCloud.pullAll(); } catch (e) { if (!opts.quiet) toast('클라우드 기록을 받지 못했어요: ' + e.message, 5000); return null; }
+    const { records, deleted, meta } = pulled;
+    const take = [], drop = [];
+    for (const r of Object.values(records)) { const l = S.records[r.key]; if (!l || (r.savedAt && (!l.savedAt || r.savedAt > l.savedAt))) take.push(r); }
+    for (const [k, d] of Object.entries(deleted || {})) { const l = S.records[k]; if (l && (!l.savedAt || (d && d.at > l.savedAt))) drop.push(l); }
+    if (take.length) await IWStore.saveRecords(take);
+    for (const r of drop) await IWStore.deleteRecord(r);
+    S.dataVersion = Math.max(S.dataVersion || 0, meta.version || 0); S.cloudMeta = meta;
+    const empty = !Object.keys(records).length;
+    if (take.length || drop.length) {
+      const who = [...new Set(take.map(r => r.savedBy).filter(Boolean))].slice(0, 2).join(', ');
+      const { records: lr, settings } = await IWStore.loadAll(); S.records = lr || {}; S.settings = mergeSettings(settings);
+      if (!opts.silentToast) toast(`☁ 다른 PC·사람이 올린 기록을 받았어요: ${take.length}일${drop.length ? ` · 삭제 ${drop.length}일` : ''}${who ? ` (${who})` : ''}`, 6000);
+      renderPill(); render();
+    }
+    return { take: take.length, drop: drop.length, empty };
+  }
   async function loadCloudView() {
     S.source = 'cloud';
     try {
@@ -1235,11 +1276,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
 
   /* ---------- 폰 반영(클라우드 업로드): 실패하면 다음에 다시 시도 ---------- */
-  function pendingGet() { try { return JSON.parse(localStorage.getItem('iw_push_pending') || '{"months":[],"deleted":[]}'); } catch (e) { return { months: [], deleted: [] }; } }
+  function pendingGet() { try { return JSON.parse(localStorage.getItem('iw_push_pending') || '{"months":[],"deleted":[],"keys":[]}'); } catch (e) { return { months: [], deleted: [], keys: [] }; } }
   function pendingSet(p) { try { localStorage.setItem('iw_push_pending', JSON.stringify(p)); } catch (e) { } }
   function queuePush(recs, deletedKeys, why) {
     const p = pendingGet(); p.notes = p.notes || [];
-    recs.forEach(r => { const mk = `${r.date.slice(0, 7)}|${r.region}`; if (!p.months.includes(mk)) p.months.push(mk); });
+    p.keys = p.keys || [];
+    recs.forEach(r => { const mk = `${r.date.slice(0, 7)}|${r.region}`; if (!p.months.includes(mk)) p.months.push(mk); if (!p.keys.includes(r.key)) p.keys.push(r.key); });
     (deletedKeys || []).forEach(k => { if (!p.deleted.includes(k)) p.deleted.push(k); });
     if (why) p.notes.push(why);
     else if (recs.length) {
@@ -1253,10 +1295,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const p = pendingGet();
     if (!p.months.length) return { ok: true, n: 0 };
     try {
-      const n = await IWCloud.pushMonths(S.records, p.months, p.deleted);
-      const note = (p.notes || []).slice(-5).join(' / ') || `${n}개월 갱신`;
+      const res = await IWCloud.pushMonths(S.records, p.months, p.deleted, p.keys && p.keys.length ? p.keys : (p.deleted && p.deleted.length ? [] : null));
+      const n = res.n;
+      const note = ((p.notes || []).slice(-5).join(' / ') || `${n}개월 갱신`) + (res.kept ? ` (다른 사람이 더 나중에 저장한 ${res.kept}일은 그대로 둠)` : '');
       try { S.dataVersion = await IWCloud.bumpMeta(note); } catch (e) { console.warn('meta', e); }
-      pendingSet({ months: [], deleted: [], notes: [] });
+      IWCloud.logActivity('저장', note);
+      try { const m = await IWCloud.pullMeta(); S.cloudMeta = Object.assign(S.cloudMeta || {}, { version: m.version, log: m.log }); } catch (e) { }
+      pendingSet({ months: [], deleted: [], notes: [], keys: [] });
+      if (res.kept) { await syncFromCloud({ quiet: true, silentToast: true }); toast(`다른 사람이 더 나중에 저장한 ${res.kept}일은 덮어쓰지 않고 그 기록을 받아왔어요`, 6000); }
       try { localStorage.setItem('iw_push_last', new Date().toISOString()); } catch (e) { }
       S.lastPush = { ok: true, n, at: new Date().toISOString() };
     } catch (e) { S.lastPush = { ok: false, msg: e.message, waiting: p.months.length }; }
@@ -1264,7 +1310,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     return S.lastPush;
   }
   async function checkDataUpdate() {
-    if (S.source !== 'cloud' || document.hidden) return;
+    if (document.hidden) return;
+    if (S.source === 'local') { if (IWCloud.enabled() && IWCloud.signedIn()) { try { const m = await IWCloud.pullMeta(); if ((m.version || 0) > (S.dataVersion || 0)) await syncFromCloud({ quiet: true }); } catch (e) { } } return; }
+    if (S.source !== 'cloud') return;
     try {
       const m = await IWCloud.pullMeta();
       if ((m.version || 0) > (S.dataVersion || 0)) {
@@ -1279,7 +1327,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const app = S.newApp, dat = S.newData;
     if (!app && !dat) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'updBanner'; document.body.appendChild(el); }
-    const items = dat ? dat.items.slice(0, 3).map(x => `<li>${esc(x.note)}</li>`).join('') : '';
+    const items = dat ? dat.items.slice(0, 3).map(x => `<li>${esc(x.note)}${x.by ? ` <span class="muted">· ${esc(x.by)}</span>` : ''}</li>`).join('') : '';
     el.innerHTML = `<div class="upd-in"><div style="flex:1;min-width:0">
         <b>${dat ? `새 데이터 업데이트 v${dat.version}` : '앱 새 버전이 있어요'}</b>
         ${dat && items ? `<ul>${items}</ul>` : `<div class="small muted">${app ? '화면·기능이 개선된 버전이에요' : ''}</div>`}
@@ -1631,6 +1679,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="card summary">${sum}${regionRow}
       ${ins.length ? `<ul class="ins">${ins.map(i => `<li><span class="ic">${i.ic}</span><span>${i.h}</span></li>`).join('')}</ul>` : ''}
       ${cmp.partial && cur.total ? `<div class="muted small" style="margin-top:8px">ⓘ ${esc(cmp.note)}</div>` : ''}
+      ${lastUpdLine()}
       ${cur.total ? `<div class="muted small" style="margin-top:6px">ⓘ 비율은 문의 ${MIN_N}건 이상일 때만 '가장 높다/낮다'로 판단해요. 그래프에 손가락을 대거나 마우스를 올리면 정확한 숫자가 나와요.</div>` : ''}</div>
     <div class="grid g4" style="margin-top:16px">${kpis.slice(0, 4).join('')}</div>
     ${cur.total ? `<div class="grid g2" style="margin-top:16px">${trendCard || ''}${dailyCard}</div>` : ''}
@@ -1652,11 +1701,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     ${warnRecs.length ? `<div class="card" style="margin-top:16px"><h3>확인할 경고 <small>CHECK</small><span class="right tag warn">${warnRecs.length}일</span></h3>${warnRecs.sort((a, b) => a.date < b.date ? -1 : 1).map(r => `<details><summary>${r.date} · ${REGIONS[r.region].label} · 경고 ${r.warnings.length}개</summary><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`).join('')}</div>` : ''}
     `;
     drawCharts();
+    const gl2 = $('#goLog'); if (gl2) gl2.onclick = () => { S.view = 'settings'; document.querySelectorAll('.navbtn').forEach(x => x.classList.toggle('on', x.dataset.view === 'settings')); render(); setTimeout(() => { const e = $('#actCard'); if (e) e.scrollIntoView({ behavior: 'smooth' }); }, 100); };
     bindSeg('region', r => { S.region = r; render(); });
     bindSeg('ptype', t => { S.ptype = t; render(); });
     $('#pPrev').onclick = () => { S.anchor = IW.shiftPeriod(p, -1, st).start; render(); };
     $('#pNext').onclick = () => { S.anchor = IW.shiftPeriod(p, 1, st).start; render(); };
     $('#pToday').onclick = () => { S.anchor = todayStr(); render(); };
+  }
+  function fmtWhen(iso) { return iso ? new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''; }
+  function lastUpdLine() {
+    const l = S.cloudMeta && S.cloudMeta.log && S.cloudMeta.log[0];
+    if (!l) return '';
+    return `<div class="lastupd">☁ 마지막 업데이트 <b>${esc(fmtWhen(l.at))}</b>${l.by ? ` · <b>${esc(l.by)}</b>` : ''} · ${esc(l.note)} <button class="btn ghost sm" id="goLog">기록 보기</button></div>`;
   }
   function countDays(recs) { return new Set(recs.filter(r => !r.empty || r.savedAsZero).map(r => r.date)).size; }
   function coverageNote(recs, wd) {
@@ -1729,10 +1785,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     $('#ibOk').onclick = closeModal;
   }
   async function afterLogin(role) {
-    toast(role === 'editor' ? `${IWCloud.email()} · 편집자로 로그인했어요. 저장하면 폰에도 자동 반영돼요` : `${IWCloud.email()} · 로그인했어요`, 4500);
+    toast(`${IWCloud.email()} · 로그인했어요${isViewDevice() ? '' : '. 저장하면 폰에도 자동 반영되고, 누가 저장했는지 기록돼요'}`, 4500);
     S.anchor = null; S.rptAnchor = null; S.calMonth = null;
     await reload();
-    if (role === 'editor') { const all = Object.values(S.records); if (all.length) { queuePush(all, null, '편집자 로그인 후 이 PC 기록 전체 동기화'); await pushPending(); } }
+    IWCloud.logActivity('로그인', isViewDevice() ? '폰/태블릿에서 로그인' : 'PC에서 로그인');
+    if (S.source === 'local') {
+      S.syncedOnce = true;
+      const r = await syncFromCloud();
+      const all = Object.values(S.records);
+      if (r && r.empty && all.length) { queuePush(all, null, '처음 연결: 이 PC 기록을 클라우드에 올림'); await pushPending(); }
+    }
   }
   function emptyBox() { return `<div class="empty"><b>데이터가 없어요</b>이 기간에 저장된 기록이 없습니다.</div>`; }
 
@@ -2271,7 +2333,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       if (r.parser !== 'weekly-v1' && S.records[r.key] && S.records[r.key].parser === 'weekly-v1' && !S.records[r.key].empty) continue;
       byKey.set(r.key, r);
     }
-    const recs = [...byKey.values()].map(r => Object.assign({}, r, { savedAt: now, savedAsZero: r.empty ? true : undefined }));
+    const who = IWCloud.enabled() && IWCloud.signedIn() ? IWCloud.email() : '';
+    const recs = [...byKey.values()].map(r => Object.assign({}, r, { savedAt: now, savedBy: who || undefined, savedAsZero: r.empty ? true : undefined }));
     const delKeys = [...new Set(sel.flatMap(x => x.deletes || []))].filter(k => S.records[k] && !byKey.has(k));
     S.lastCheck = sel.map(x => x.check).filter(Boolean);
     try {
@@ -2421,11 +2484,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="topbar"><h1><small>Data</small>저장 기록</h1>
       <select id="dm">${months.map(m => `<option ${m === S.dataMonth ? 'selected' : ''}>${m}</option>`).join('')}</select>
       <button class="btn" id="exp">전체 백업 파일 받기</button><button class="btn" id="imp">백업 불러오기</button><input type="file" id="impF" accept=".json" class="hide"></div>
-    <div class="card">${show.length ? `<div class="tablewrap"><table class="list"><tr><th>날짜</th><th>권역</th><th>문의</th><th>채널</th><th>경고</th><th>원본 파일</th><th>저장 시각</th><th></th></tr>
+    <div class="card">${show.length ? `<div class="tablewrap"><table class="list"><tr><th>날짜</th><th>권역</th><th>문의</th><th>채널</th><th>경고</th><th>원본 파일</th><th>저장 시각 · 저장한 사람</th><th></th></tr>
       ${show.map(r => `<tr><td><b>${r.date}</b> <span class="muted">${DOW[IW.dow(r.date)]}</span></td><td><span class="tag ${r.region}">${REGIONS[r.region].label}</span></td><td><b>${r.total}</b>${r.savedAsZero ? ' <span class="tag">0건 저장</span>' : ''}</td>
         <td class="small">${sorted(r.channels).filter(c => c[1]).map(c => esc(c[0]) + ' ' + c[1]).join(' · ')}</td>
         <td>${(r.warnings || []).length ? `<details><summary>${r.warnings.length}</summary><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>` : '<span class="muted">–</span>'}</td>
-        <td class="small muted">${esc(r.source && r.source.path || '')}</td><td class="small muted">${r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : ''}</td>
+        <td class="small muted">${esc(r.source && r.source.path || '')}</td><td class="small muted">${r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : ''}${r.savedBy ? `<br><b style="color:var(--ink2)">${esc(r.savedBy)}</b>` : ''}</td>
         <td><button class="btn sm danger" data-del="${esc(r.key)}">삭제</button></td></tr>`).join('')}</table></div>` : `<div class="empty"><b>저장된 기록이 없어요</b>데이터 입력에서 엑셀을 분석하고 저장하면 여기에 쌓여요.</div>`}
       <p class="muted small">저장되는 건 날짜·권역별 <b>건수와 경고</b>뿐이에요. 이름·연락처는 저장하지 않아요.</p></div>`;
     const dm = $('#dm'); if (dm) dm.onchange = () => { S.dataMonth = dm.value; render(); };
@@ -2478,13 +2541,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <label class="small row"><input type="checkbox" id="big" ${localGet('big') === '1' ? 'checked' : ''}> 큰 글씨</label></div>
       </div>
     </div>
-    ${IWCloud.enabled() ? `<div class="card" style="margin-top:16px"><h3>폰 연결 <small>CLOUD</small></h3>
-      ${IWCloud.signedIn() ? `<div class="row"><span class="tag ${IWCloud.role === 'editor' ? 'ok' : ''}">${IWCloud.role === 'editor' ? '편집자' : '보기 전용'}</span><b>${esc(IWCloud.email())}</b>
-        <span class="right row" style="margin-left:auto">${IWCloud.isEditor() ? `<button class="btn sm" id="pushAll">지금 전체 폰에 반영</button><button class="btn sm" id="pullToLocal">클라우드 기록을 이 PC로 가져오기</button>` : ''}<button class="btn sm ghost" id="logout">로그아웃</button></span></div>
+    ${IWCloud.enabled() ? `<div class="card" style="margin-top:16px"><h3>로그인 · 활동 기록 <small>ACCOUNT</small></h3>
+      ${IWCloud.signedIn() ? `<div class="row"><span class="tag ok">로그인됨</span><b>${esc(IWCloud.email())}</b>
+        <span class="right row" style="margin-left:auto">${IWCloud.isEditor() && S.source === 'local' ? `<button class="btn sm" id="pushAll">지금 전체 폰에 반영</button><button class="btn sm" id="pullToLocal">클라우드 최신 기록 받기</button>` : ''}<button class="btn sm ghost" id="logout">로그아웃</button></span></div>
         <div class="small" style="margin:10px 0">데이터 버전 <b>v${S.dataVersion || (S.cloudMeta && S.cloudMeta.version) || 0}</b> · 앱 버전 <b>${esc(APP_VERSION)}</b> · 로그인 <b>${IWCloud.s && IWCloud.s.via === 'google' ? 'Google' : '이메일'}</b> (이 기기에 기억됨)</div>
-        <div id="updLog" class="small"></div>
+        <div id="actCard" style="margin-top:6px"><b class="small">누가 언제 무엇을 했는지</b> <span class="muted small">(지울 수 없는 기록)</span><div id="actLog" class="small" style="margin-top:6px"><span class="muted">불러오는 중…</span></div></div>
         ${S.source === 'cloud' ? `<div class="row" style="margin:12px 0 4px"><span class="small">화면</span><div class="seg" data-seg="theme2">${[['auto', '자동'], ['light', '밝게'], ['dark', '어둡게']].map(([k, l]) => `<button data-v="${k}" class="${(localGet('theme') || 'auto') === k ? 'on' : ''}">${l}</button>`).join('')}</div><label class="small row"><input type="checkbox" id="big2" ${localGet('big') === '1' ? 'checked' : ''}> 큰 글씨</label></div>` : ''}
-        <p class="muted small">${IWCloud.isEditor() ? '이 PC에서 저장·삭제하면 통계 숫자만 자동으로 폰 앱에 반영돼요. 이름·연락처, 연락처가 들어간 경고 문구는 올라가지 않아요.' : '보기 전용 계정이라 이 기기에서는 통계를 볼 수만 있어요.'}</p>`
+        <p class="muted small">${S.source === 'local' ? '구글로 로그인한 사람은 누구나 볼 수 있고, PC에서 저장하면 저장한 사람 이메일이 기록돼요. 이름·연락처는 올라가지 않아요. 같은 날짜는 더 나중에 저장한 기록이 이겨요.' : '이 기기에서는 통계를 볼 수 있어요. DB 올리기는 PC 크롬에서 해요.'}</p>`
       : `<p>로그인하지 않아서 폰 앱에 반영되지 않아요.</p><button class="btn primary sm" id="goLogin">로그인</button>`}
     </div>` : ''}
     <div class="grid g2 pconly" style="margin-top:16px">
@@ -2512,16 +2575,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       else mig.classList.add('hide');
     })();
     $('#diagCopy').onclick = async () => copy(await diagText(), '진단 결과를 복사했어요');
-    const ul = $('#updLog'); if (ul && IWCloud.signedIn()) IWCloud.pullMeta().then(m => { if (!(m.log || []).length) { ul.innerHTML = '<span class="muted">아직 업데이트 기록이 없어요</span>'; return; }
-      ul.innerHTML = `<details open><summary><b>업데이트 기록</b></summary><ul style="margin:6px 0;padding-left:18px;line-height:1.7">${m.log.slice(0, 10).map(x => `<li><b>v${x.v}</b> ${new Date(x.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${esc(x.note)}</li>`).join('')}</ul></details>`; }).catch(() => { });
+    const al = $('#actLog'); if (al && IWCloud.signedIn()) IWCloud.pullActivity(60).then(list => {
+      if (!list.length) { al.innerHTML = '<span class="muted">아직 기록이 없어요</span>'; return; }
+      al.innerHTML = `<div class="tablewrap" style="max-height:340px;overflow:auto"><table class="list"><tr><th>언제</th><th>누가</th><th>무엇</th></tr>${list.map(x => `<tr><td class="small" style="white-space:nowrap">${esc(fmtWhen(x.at))}</td><td class="small"><b>${esc(x.by)}</b><br><span class="muted">${esc(x.device)}</span></td><td class="small"><span class="tag ${x.kind === '저장' ? 'ok' : ''}">${esc(x.kind)}</span> ${esc(x.note)}</td></tr>`).join('')}</table></div>`;
+    }).catch(e => { al.innerHTML = `<span class="muted">기록을 불러오지 못했어요: ${esc(e.message)}</span>`; });
     const lo = $('#logout'); if (lo) lo.onclick = async () => { if (!(await ask('로그아웃할까요?'))) return; IWCloud.signOut(); S.skipLogin = false; S.anchor = null; await reload(); };
     const gl = $('#goLogin'); if (gl) gl.onclick = () => { S.skipLogin = false; render(); };
     const pa = $('#pushAll'); if (pa) pa.onclick = async () => { pa.disabled = true; queuePush(Object.values(S.records), null, '전체 다시 반영'); const r = await pushPending(); toast(r && r.ok ? `폰에 반영했어요 (${r.n}개월)` : '반영 실패: ' + (r && r.msg), 6000); render(); };
-    const pl = $('#pullToLocal'); if (pl) pl.onclick = async () => {
-      try { const { records } = await IWCloud.pullAll(); const list = Object.values(records).filter(r => !S.records[r.key]);
-        if (!list.length) return toast('이 PC에 없는 기록이 없어요 (이미 다 있어요)');
-        if (!(await ask(`이 PC에 없는 ${list.length}일치를 클라우드에서 가져올까요? 이미 있는 날은 건드리지 않아요.`))) return;
-        await IWStore.saveRecords(list); await reload(); toast(`${list.length}일치를 가져왔어요`); } catch (e) { toast('가져오기 실패: ' + e.message, 6000); } };
+    const pl = $('#pullToLocal'); if (pl) pl.onclick = async () => { pl.disabled = true; const r = await syncFromCloud(); if (r && !r.take && !r.drop) toast('이미 최신이에요'); pl.disabled = false; };
     bindSeg('theme2', v => { localSet('theme', v); applyTheme(); render(); });
     const b2 = $('#big2'); if (b2) b2.onchange = e => { localSet('big', e.target.checked ? '1' : '0'); applyTheme(); };
     bindSeg('theme', v => { localSet('theme', v); applyTheme(); render(); });
@@ -2599,6 +2660,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     setInterval(checkDataUpdate, 5 * 60000);
     for (const r of Object.keys(REGIONS)) { const h = await IWStore.getSource(r); if (h) S.srcHandles[r] = h; }
     await reload();
+    if (S.source === 'local' && IWCloud.enabled() && IWCloud.signedIn() && !S.syncedOnce) { S.syncedOnce = true; await syncFromCloud({ quiet: true }); }
     setTimeout(() => autoSyncOnce(), 1500);
   })();
   window.__IW_STATE = S; window.__reload = reload;
