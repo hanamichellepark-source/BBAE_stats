@@ -1,5 +1,5 @@
 /* Insight Wave: 오프라인에서도 열리게. 새 버전은 사용자가 "업데이트"를 누를 때 적용 */
-const V = 'iw-2610271158';
+const V = 'iw-2610271404';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' }))))); });
 self.addEventListener('message', e => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });

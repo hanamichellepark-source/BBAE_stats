@@ -164,6 +164,24 @@ textarea{width:100%;min-height:70px}
 .hide{display:none!important}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;overflow:visible}
+.chart .ax{font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums}
+.chart .ax.hi{fill:var(--ink);font-weight:700}
+.chart .vl{font-size:11.5px;fill:var(--ink2);font-weight:700;font-variant-numeric:tabular-nums}
+.chart .vl.hi{fill:var(--ink)}
+#tip{position:fixed;left:0;top:0;z-index:80;pointer-events:none;background:var(--card-solid);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:.82rem;line-height:1.5;box-shadow:0 10px 28px rgba(0,0,0,.18);opacity:0;transition:opacity .12s;max-width:260px}
+#tip.show{opacity:1}#tip b{display:block;margin-bottom:2px}
+ul.ins{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--line);display:grid;gap:7px;font-size:.95rem;line-height:1.55}
+ul.ins li{display:flex;gap:9px;align-items:flex-start}ul.ins .ic{width:20px;flex:none;text-align:center}
+ul.ins b{color:var(--ink)}
+details.tv{margin-top:8px}details.tv table{font-size:.8rem}details.tv td,details.tv th{padding:5px 8px}
+.bar .tr{position:relative}
+.rb .tr{overflow:visible}.rb .fl{position:relative}
+.tr .avg{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:1px;z-index:1;opacity:.7}
+.legend i.avgk{width:2px;height:12px;background:var(--ink);opacity:.7;border-radius:1px}
+.sm4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.smh{display:flex;justify-content:space-between;align-items:baseline;font-size:.86rem;margin-bottom:2px}
 @media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:1fr}}
 .ni{display:none;width:22px;height:22px}
 .ni svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -200,6 +218,7 @@ nav.side.hide + main{max-width:none}
   .summary{font-size:.98rem;padding:14px 16px}
   .bar{grid-template-columns:64px 1fr auto;gap:8px;font-size:.84rem}
   .bar .vl small{display:block;margin:0;font-size:.68rem}
+  .sm4{gap:8px 12px}ul.ins{font-size:.9rem}
   .cols{height:140px}.cols .c .d{font-size:.6rem}
   .cal{gap:4px}.cal .d{min-height:58px;padding:5px 6px;border-radius:10px}.cal .d .t{font-size:1.05rem}.cal .d .rg{display:none}.cal .d .n{font-size:.7rem}
   .overlay{align-items:flex-end;padding:0}
@@ -331,7 +350,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const parts = String(path).replace(/\\/g, '/').split('/').filter(Boolean);
     const fname = parts[parts.length - 1] || '';
     const res = { date: null, year: null, month: null, day: null, warnings: [], yearSource: null };
-    const fm = fname.match(/(\d{1,2})\s*[._\-]\s*(\d{1,2})(?=\D*\.xls[xm]?$)/i);
+    const fm = fname.match(/(?<![vV\d.])(\d{1,2})\s*[._\-]\s*(\d{1,2})(?=\D*\.xls[xm]?$)/i);
     if (!fm) { res.warnings.push('파일명에서 월.일을 찾지 못함'); return res; }
     res.month = +fm[1]; res.day = +fm[2];
     let folderMonth = null;
@@ -560,7 +579,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           if (looksO(rv)) day.warnings.push(`${r + 1}행: 예약 칸에 "${clean(rv)}" — O가 아니라 예약으로 안 셈 (홍보팀 표와 같은 기준)`);
           if (looksO(cs)) day.warnings.push(`${r + 1}행: 비용 칸에 "${clean(cs)}" — O가 아니라 비용문의로 안 셈`);
           cells.forEach(cl => { if (/\s|,/.test(cl) && teamCell(cl) !== '기타부위') day.warnings.push(`${r + 1}행: 한 칸에 "${cl}" — 홍보팀 기준대로 "${teamCell(cl)}"만 셈`); });
-          day.inquiries.push({ channel: ch, cells, part: cells.join(', '), resv: isO(rv), cost: isO(cs), note });
+          // 홍보팀 '예약중복' 수식과 같은 방식: 채널이 있고 부위2~4 칸이 비어 있지 않으면 하나씩 셈
+          const teamExtra = [2, 3, 4].filter(k => row[c + k] !== '' && row[c + k] != null).length;
+          if (!isReal(clean(row[c + 1])) && cells.length) day.warnings.push(`${r + 1}행: 부위1이 비어 있고 뒤 칸에 "${cells.join(', ')}" 입력 — 부위 집계는 정상, 홍보팀 '예약중복' 칸만 1 더 셈`);
+          day.inquiries.push({ channel: ch, cells, part: cells.join(', '), resv: isO(rv), cost: isO(cs), note, teamExtra });
         }
       }
       sheets.push(sheetInfo);
@@ -580,10 +602,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       for (const [k, v] of Object.entries(r.resvCh || {})) agg.chR[k] = (agg.chR[k] || 0) + v;
       for (const [k, v] of Object.entries(r.parts || {})) agg.pt[k] = (agg.pt[k] || 0) + v;
       for (const [k, v] of Object.entries(r.resvPt || {})) agg.ptR[k] = (agg.ptR[k] || 0) + v;
-      agg.cost += r.cost || 0; agg.dateAsk += r.dateAsk || 0; agg.extra += r.partExtra || 0;
+      agg.cost += r.cost || 0; agg.dateAsk += r.dateAsk || 0; agg.extra += r.teamExtra != null ? r.teamExtra : (r.partExtra || 0);
     }
-    const diffs = []; let cells = 0;
-    const cmp = (label, team, mine) => { if (team === undefined) return; cells++; if (team !== mine) diffs.push(`${label}: 홍보팀 ${team} / 앱 ${mine}`); };
+    const diffs = [], soft = []; let cells = 0;
+    const cmp = (label, team, mine, isSoft) => { if (team === undefined) return; cells++; if (team !== mine) (isSoft ? soft : diffs).push(`${label}: 홍보팀 ${team} / 앱 ${mine}`); };
     const T = sheet.team;
     if (T.ch) {
       const listed = T.ch.cols.filter(c => !['총합', '상담날짜문의', '비용문의'].includes(c));
@@ -594,11 +616,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     }
     if (T.pt) {
       for (const c of T.pt.cols) {
-        if (c === '예약중복') { cmp('예약중복(부위 추가분)', T.pt.inq[c], agg.extra); continue; }
+        // 예약중복은 홍보팀 확인용 보조 칸이라 문의·예약·부위 숫자에 영향이 없음 → 달라도 저장은 막지 않고 알려만 줌
+        if (c === '예약중복') { cmp('예약중복(부위 추가분)', T.pt.inq[c], agg.extra, true); continue; }
         cmp(`부위 문의·${c}`, T.pt.inq[c], agg.pt[c] || 0); cmp(`부위 예약·${c}`, T.pt.resv[c], agg.ptR[c] || 0);
       }
     }
-    return { sheet: sheet.name, cells, diffs, hasTable: !!(T.ch || T.pt) };
+    return { sheet: sheet.name, cells, diffs, soft, hasTable: !!(T.ch || T.pt) };
   }
 
   /* ---------- 해석 결과 → 저장용 기록 (개인정보 없음) ---------- */
@@ -625,6 +648,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       }
       const nCats = q.cells ? cats.length : cats.size;
       if (nCats === 0) { q.cells ? cats.push('부위미상') : cats.add('부위미상'); rec.noPart++; } else rec.partExtra += nCats - 1;
+      if (q.teamExtra !== undefined) rec.teamExtra = (rec.teamExtra || 0) + q.teamExtra;
       if (q.resv !== undefined) {
         rec.hasResv = true;
         if (q.resv) { rec.resv++; rec.resvCh[q.channel] = (rec.resvCh[q.channel] || 0) + 1; for (const c of cats) rec.resvPt[c] = (rec.resvPt[c] || 0) + 1; }
@@ -633,7 +657,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         rec.hasNotes = true;
         if (q.cost) rec.cost++;
         if (q.note === '상담날짜문의') rec.dateAsk++;
-        if (q.note === '중복DB') { rec.dupDB++; rec.partExtra++; }
+        if (q.note === '중복DB') { rec.dupDB++; rec.partExtra++; rec.teamExtra = (rec.teamExtra || 0) + 1; }
       }
       for (const c of cats) {
         rec.parts[c] = (rec.parts[c] || 0) + 1;
@@ -684,7 +708,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   /* ---------- 집계 ---------- */
   function aggregate(records, region, start, end) {
     const out = { total: 0, channels: {}, parts: {}, matrix: {}, noPart: 0, partExtra: 0, days: 0, byDate: {}, warnings: 0, dup: 0, regions: {},
-      resvDays: 0, resvTotal: 0, resvBase: 0, resv: 0, resvCh: {}, resvPt: {}, chBase: {}, ptBase: {}, notesDays: 0, cost: 0, dateAsk: 0 };
+      resvDays: 0, resvTotal: 0, resvBase: 0, resv: 0, resvCh: {}, resvPt: {}, chBase: {}, ptBase: {}, notesDays: 0, notesBase: 0, cost: 0, dateAsk: 0 };
     for (const r of Object.values(records)) {
       if (r.date < start || r.date > end) continue;
       if (region !== 'all' && r.region !== region) continue;
@@ -703,7 +727,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         for (const [k, v] of Object.entries(r.channels || {})) out.chBase[k] = (out.chBase[k] || 0) + v;
         for (const [k, v] of Object.entries(r.parts || {})) out.ptBase[k] = (out.ptBase[k] || 0) + v;
       }
-      if (r.hasNotes) { out.notesDays++; out.cost += r.cost || 0; out.dateAsk += r.dateAsk || 0; }
+      if (r.hasNotes) { out.notesDays++; out.notesBase += r.total; out.cost += r.cost || 0; out.dateAsk += r.dateAsk || 0; }
     }
     return out;
   }
@@ -1079,7 +1103,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 (function () {
   'use strict';
   const { REGIONS } = IW;
-  const APP_VERSION = '2610271158';
+  const APP_VERSION = '2610271404';
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayStr = () => IW.fmtDate(new Date());
@@ -1090,7 +1114,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     view: 'home', region: 'all', ptype: 'week', anchor: null,
     rptType: 'week', rptAnchor: null, rptRegion: 'en',
     calMonth: null, records: {}, settings: null,
-    queue: [], reviewed: false, dropRegion: 'en', walkErrors: [], autoAfterAdd: false, rescanAll: false, srcHandles: {}
+    queue: [], reviewed: false, dropRegion: 'en', walkErrors: [], autoAfterAdd: false, sync: { running: false, last: null, lastSaved: null, needPerm: [], issues: [] }, rescanAll: false, srcHandles: {}
   };
 
   function ask(msg) {
@@ -1278,7 +1302,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     else if (IWStore.mode === 'nas') h = `<b><span class="dot" style="background:var(--ok)"></span>폴더 저장 중</b><span class="muted">${esc(IWStore.dirName)} 폴더</span>`;
     else if (IWStore.pending) h = `<b><span class="dot" style="background:var(--warn)"></span>NAS 다시 연결 필요</b><span class="muted">${S.fromCache ? '사본 표시 중' : ''}</span><button class="btn sm" id="reconnect" style="margin-top:6px">다시 연결</button>`;
     else h = `<b><span class="dot" style="background:var(--ok)"></span>이 PC 크롬에 저장 중</b><span class="muted">NAS 폴더를 연결하면 더 안전해요</span>`;
-    h += `<div class="muted" style="margin-top:6px">저장된 날 ${Object.keys(S.records).length}개</div>` + cloudLine();
+    h += `<div class="muted" style="margin-top:6px">저장된 날 ${Object.keys(S.records).length}개</div>` + cloudLine() + syncLine();
     $('#storePill').innerHTML = h;
     const rc = $('#reconnect'); if (rc) rc.onclick = async () => { try { await IWStore.connect(false); await reload(); toast('저장 폴더에 다시 연결했어요'); } catch (e) { showFsError(e, null, '저장 폴더 연결 실패'); } };
   }
@@ -1326,17 +1350,169 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   function josa(w, a, b) { const c = String(w).trim().slice(-1).charCodeAt(0); if (c < 0xAC00 || c > 0xD7A3) return a; return (c - 0xAC00) % 28 ? a : b; }
   function sorted(obj) { return Object.entries(obj).sort((a, b) => b[1] - a[1]); }
 
+  /* ======================= 차트 (직접 그린 SVG · 외부 라이브러리 없음) ======================= */
+  let CHARTS = {};
+  function chartBox(id, fn, h) { CHARTS[id] = fn; return `<div class="chart" data-chart="${id}" style="height:${h}px"></div>`; }
+  function drawCharts() { document.querySelectorAll('[data-chart]').forEach(el => { const fn = CHARTS[el.dataset.chart]; if (fn) el.innerHTML = fn(Math.max(240, el.clientWidth), el.clientHeight); }); }
+  let rzT; window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(drawCharts, 150); });
+  // 마우스를 올리거나(PC) 누르면(폰) 숫자 풍선
+  const tipEl = document.createElement('div'); tipEl.id = 'tip'; document.body.appendChild(tipEl);
+  function placeTip(e) { const w = tipEl.offsetWidth, h = tipEl.offsetHeight; let x = e.clientX + 14, y = e.clientY - h - 12; if (x + w > innerWidth - 8) x = Math.max(8, e.clientX - w - 14); if (y < 8) y = e.clientY + 18; tipEl.style.transform = `translate(${x}px,${y}px)`; }
+  document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (!t) { tipEl.classList.remove('show'); return; } tipEl.innerHTML = t.dataset.tip; tipEl.classList.add('show'); placeTip(e); });
+  document.addEventListener('pointermove', e => { if (tipEl.classList.contains('show')) placeTip(e); });
+  document.addEventListener('scroll', () => tipEl.classList.remove('show'), true);
+  const tipA = (title, lines) => esc(`<b>${esc(title)}</b>${lines.filter(Boolean).map(l => `<div>${l}</div>`).join('')}`);
+  function niceTicks(max, n = 4, pct = false) {
+    if (max <= 0) return [0, 1];
+    const raw = max / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+    let step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    if (!pct && step < 1) step = 1; if (!pct && step % 1) step = Math.ceil(step);   // 건수는 정수 눈금
+    const out = []; for (let v = 0; v < max + step * 0.999; v += step) out.push(+v.toFixed(6)); if (out.length < 2) out.push(step); return out;
+  }
+  const fmtN = (v, unit) => unit === '%' ? `${(+v).toFixed(v % 1 && Math.abs(v) < 10 ? 1 : 0)}%` : `${Math.round(v * 10) / 10}`;
+  function colPath(x, y, w, yb) { const r = Math.min(4, w / 2, (yb - y)); if (yb - y < 1) return `M${x},${yb - 1}h${w}v1h${-w}z`; return `M${x},${yb}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${yb}Z`; }
+  /* 세로 막대: items [{x:'라벨'|['줄1','줄2'], v:number|null, tip, hi:bool, partial:bool}] */
+  function colChart(W, H, o) {
+    const L = 34, R = 8, T = 20, B = o.twoLine ? 34 : 22, iw = W - L - R, ih = H - T - B, n = o.items.length;
+    const vals = o.items.map(i => i.v).filter(v => v != null);
+    const ticks = niceTicks(Math.max(o.minMax || 1, ...vals, o.avg || 0), 4, o.unit === '%'), top = ticks[ticks.length - 1];
+    const Y = v => T + ih - v / top * ih, slot = iw / n, bw = Math.min(24, Math.max(4, slot - 2 - slot * 0.3));
+    const color = o.color || 'var(--accent)';
+    let s = `<svg width="${W}" height="${H}" role="img" aria-label="${esc(o.label || '')}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${W - R}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" class="ax">${fmtN(t, o.unit)}</text>`; });
+    const maxV = Math.max(...vals); let maxDone = false;
+    const every = slot < 30 ? Math.ceil(30 / slot) : 1;
+    o.items.forEach((it, i) => {
+      const cx = L + slot * i + slot / 2, x = cx - bw / 2;
+      if (it.v == null) s += `<rect x="${x}" y="${Y(0) - 3}" width="${bw}" height="3" rx="1.5" fill="none" stroke="var(--muted)" stroke-dasharray="2 2" opacity=".7"/>`;
+      else s += `<path d="${colPath(x, Y(it.v), bw, Y(0))}" fill="${color}" opacity="${it.hi ? 1 : it.partial ? .5 : o.emph ? .38 : 1}"/>`;
+      const lab = it.v != null && (it.hi || (it.v === maxV && !maxDone && maxV > 0) || o.labelAll);
+      if (it.v === maxV) maxDone = true;
+      if (lab) s += `<text x="${cx}" y="${Y(it.v) - 6}" text-anchor="middle" class="vl${it.hi ? ' hi' : ''}">${fmtN(it.v, o.unit)}</text>`;
+      const hiI = o.items.findIndex(z => z.hi);
+      if (it.hi || (i % every === 0 && (hiI < 0 || Math.abs(i - hiI) >= every))) { const xl = Array.isArray(it.x) ? it.x : [it.x]; s += `<text x="${cx}" y="${H - B + 14}" text-anchor="middle" class="ax${it.hi ? ' hi' : ''}">${xl.map((t, k) => `<tspan x="${cx}" dy="${k ? 12 : 0}">${esc(t)}</tspan>`).join('')}</text>`; }
+      s += `<rect x="${L + slot * i}" y="${T}" width="${slot}" height="${ih + B}" fill="transparent" data-tip="${it.tip || ''}"/>`;
+    });
+    if (o.avg != null) s += `<line x1="${L}" x2="${W - R}" y1="${Y(o.avg)}" y2="${Y(o.avg)}" stroke="var(--ink2)" stroke-width="1" stroke-dasharray="4 3" pointer-events="none"/>`;
+    return s + `</svg>`;
+  }
+  /* 꺾은선 (같은 단위 % 끼리만, 축 하나): series [{name, color, dash, pts:[v|null]}], xs [], tips [] */
+  function lineChart(W, H, o) {
+    const L = 38, R = 64, T = 16, B = o.twoLine ? 34 : 22, iw = W - L - R, ih = H - T - B, n = o.xs.length;
+    const vals = o.series.flatMap(s => s.pts).filter(v => v != null);
+    const ticks = niceTicks(Math.max(10, ...vals), 4, true), top = ticks[ticks.length - 1];
+    const X = i => L + (n === 1 ? iw / 2 : iw * i / (n - 1)), Y = v => T + ih - v / top * ih;
+    let s = `<svg width="${W}" height="${H}" role="img" aria-label="${esc(o.label || '')}">`;
+    ticks.forEach(t => { s += `<line x1="${L}" x2="${L + iw}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${Y(t) + 4}" text-anchor="end" class="ax">${fmtN(t, '%')}</text>`; });
+    const every = iw / n < 30 ? Math.ceil(30 / (iw / n)) : 1;
+    o.xs.forEach((x, i) => { if (i !== n - 1 && (i % every || n - 1 - i < every)) return; const xl = Array.isArray(x) ? x : [x]; s += `<text x="${X(i)}" y="${H - B + 14}" text-anchor="middle" class="ax${i === n - 1 ? ' hi' : ''}">${xl.map((t, k) => `<tspan x="${X(i)}" dy="${k ? 12 : 0}">${esc(t)}</tspan>`).join('')}</text>`; });
+    const ends = [];
+    o.series.forEach(se => {
+      let d = '', pen = false;
+      se.pts.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i)},${Y(v)}`; pen = true; });
+      s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${se.dash ? 'stroke-dasharray="5 4"' : ''}/>`;
+      se.pts.forEach((v, i) => { if (v != null) s += `<circle cx="${X(i)}" cy="${Y(v)}" r="4" fill="${se.color}" stroke="var(--card-solid)" stroke-width="2" ${se.small && se.small[i] ? 'fill-opacity=".35"' : ''}/>`; });
+      let li = -1; se.pts.forEach((v, i) => { if (v != null) li = i; });
+      if (li >= 0) ends.push({ y: Y(se.pts[li]), x: X(li), t: `${se.name} ${fmtN(se.pts[li], '%')}` });
+    });
+    // 끝 라벨이 겹치면 위아래로 벌리고 가는 연결선
+    ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].ly = ends[i - 1].ly != null ? ends[i - 1].ly + 14 : ends[i - 1].y + 14;
+    ends.forEach(e => { const ly = e.ly != null ? e.ly : e.y; if (e.ly != null) s += `<line x1="${e.x + 5}" y1="${e.y}" x2="${e.x + 9}" y2="${ly}" stroke="var(--muted)" stroke-width="1"/>`; s += `<text x="${e.x + 10}" y="${ly + 4}" class="vl">${esc(e.t)}</text>`; });
+    o.xs.forEach((x, i) => { const w = iw / Math.max(1, n - 1); s += `<rect x="${X(i) - w / 2}" y="${T}" width="${w}" height="${ih + B}" fill="transparent" data-tip="${o.tips[i] || ''}"/>`; });
+    return s + `</svg>`;
+  }
+  function tableView(head, rows) { return `<details class="tv"><summary>표로 보기</summary><div class="tablewrap"><table class="list"><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div></details>`; }
+
+  /* 지난 N개 기간 묶음 (주/월) — 데이터가 없는 기간은 0이 아니라 '없음' */
+  function usedFields(region) {
+    const u = { resv: false, cost: false };
+    for (const r of Object.values(S.records)) { if (region !== 'all' && r.region !== region) continue; if (r.resv > 0) u.resv = true; if (r.cost > 0 || r.dateAsk > 0) u.cost = true; if (u.resv && u.cost) break; }
+    return u;
+  }
+  function periodSeries(type, anchorDate, n, region) {
+    const list = []; let q = IW.periodFor(type, anchorDate, S.settings);
+    for (let i = 0; i < n; i++) { list.unshift(q); q = IW.shiftPeriod(q, -1, S.settings); }
+    return list.map(pp => { const a = IW.aggregate(S.records, region, pp.start, pp.end); return { p: pp, a, has: a.days > 0 }; });
+  }
+  const shortLab = pp => pp.type === 'week' ? [`${pp.month}월`, `${pp.week}주`] : pp.type === 'month' ? [`${+pp.start.slice(5, 7)}월`] : [pp.label];
+  const MIN_N = 10;   // 비율은 문의 10건 이상일 때만 순위·결론에 씀
+  const pct1 = (a, b) => b ? Math.round(a / b * 1000) / 10 : null;
+
+  /* 요일 패턴: 기준일까지 최근 8주, 입력된 날만 평균 */
+  function weekdayPattern(region, endDate) {
+    const start = IW.addDays(endDate, -55), sums = [0, 0, 0, 0, 0, 0, 0], cnt = [0, 0, 0, 0, 0, 0, 0];
+    const a = IW.aggregate(S.records, region, start, endDate);
+    for (const [d, v] of Object.entries(a.byDate)) { const w = IW.dow(d); sums[w] += v; cnt[w]++; }
+    return [1, 2, 3, 4, 5, 6].map(w => ({ w, avg: cnt[w] ? sums[w] / cnt[w] : null, n: cnt[w], sum: sums[w] }));
+  }
+
+  /* 비율 막대 (채널별/부위별 예약 전환율) */
+  function rateBars(base, hit, overall, opts = {}) {
+    const rows = Object.keys(base).filter(k => base[k] > 0 && !(opts.skip || []).includes(k))
+      .map(k => ({ k, n: base[k], h: hit[k] || 0, r: pct1(hit[k] || 0, base[k]) }));
+    if (!rows.length) return emptyBox();
+    rows.sort((a, b) => ((b.n >= MIN_N) - (a.n >= MIN_N)) || (b.r - a.r) || (b.n - a.n));
+    const top = 100;   // 비율은 항상 0~100% 눈금 (작은 표본의 100%가 다른 막대를 왜곡하지 않게)
+    return `<div class="bars rb">${rows.map(r => { const small = r.n < MIN_N; return `<div class="bar ${small ? 'muted' : ''}" data-tip="${tipA(r.k, [`예약 ${r.h}건 / 문의 ${r.n}건`, `전환율 ${r.r}%`, small ? '문의가 10건 미만이라 참고만 해주세요' : (overall != null ? `전체 평균 ${overall}%보다 ${r.r >= overall ? '높음' : '낮음'}` : '')])}"><span class="nm">${esc(r.k)}</span><span class="tr">${overall != null ? `<i class="avg" style="left:${overall / top * 100}%"></i>` : ''}<span class="fl" style="width:${r.r / top * 100}%"></span></span><span class="vl">${r.r}%<small>${r.h}/${r.n}${small ? ' · 표본 적음' : ''}</small></span></div>`; }).join('')}</div>
+      <div class="legend" style="margin-top:8px"><span><i class="avgk"></i>전체 평균 ${overall}%</span><span><i style="background:var(--muted);opacity:.5"></i>문의 ${MIN_N}건 미만 (참고)</span></div>`;
+  }
+
+  /* 자동 분석 문장 — 숫자는 전부 저장된 기록에서 계산, 표본이 적으면 결론을 내지 않음 */
+  function buildInsights(cur, prev, cmp, p, ser, weak) {
+    const out = [];
+    const ptName = p.type === 'week' ? '주' : '달';
+    // 1) 최근 흐름 대비
+    if (ser && p.type !== 'year') {
+      const past = ser.slice(0, -1).filter(x => x.has);
+      if (!cmp.partial && past.length >= 4 && cur.total) {
+        const avg = past.reduce((s, x) => s + x.a.total, 0) / past.length, d = Math.round((cur.total - avg) / avg * 100);
+        out.push({ ic: d >= 0 ? '📈' : '📉', h: `문의 ${cur.total}건은 최근 ${past.length}${ptName} 평균(${Math.round(avg)}건)보다 <b>${Math.abs(d)}% ${d >= 0 ? '많아요' : '적어요'}</b>.` });
+      } else if (cmp.partial) out.push({ ic: '⏳', h: `아직 진행 중인 ${ptName}이라 최근 평균과의 비교는 ${ptName}이 끝나면 보여드려요.` });
+    }
+    // 2) 채널 변화 (이전 기간과 같은 길이로 비교, 둘 중 큰 값이 5건 이상인 채널만)
+    if (prev.days) {
+      const mv = [...new Set([...Object.keys(cur.channels), ...Object.keys(prev.channels)])].map(k => ({ k, a: cur.channels[k] || 0, b: prev.channels[k] || 0 })).filter(x => Math.max(x.a, x.b) >= 5).map(x => ({ ...x, d: x.a - x.b })).filter(x => Math.abs(x.d) >= 3);
+      const up = mv.filter(x => x.d > 0).sort((a, b) => b.d - a.d)[0], dn = mv.filter(x => x.d < 0).sort((a, b) => a.d - b.d)[0];
+      if (up) out.push({ ic: '⬆️', h: `가장 많이 늘어난 채널은 <b>${esc(up.k)}</b> (${up.b}→${up.a}건, +${up.d}).` });
+      if (dn) out.push({ ic: '⬇️', h: `가장 많이 줄어든 채널은 <b>${esc(dn.k)}</b> (${dn.b}→${dn.a}건, ${dn.d}).` });
+    }
+    // 3) 예약 전환 (예약 정보가 있는 데이터만)
+    if (cur.resvDays && cur.resvBase) {
+      const ok = Object.keys(cur.chBase).filter(k => cur.chBase[k] >= MIN_N).map(k => ({ k, n: cur.chBase[k], h: cur.resvCh[k] || 0, r: pct1(cur.resvCh[k] || 0, cur.chBase[k]) })).sort((a, b) => b.r - a.r);
+      if (ok.length >= 2) {
+        const hi = ok[0], lo = ok[ok.length - 1];
+        out.push({ ic: '🎯', h: `예약 전환율이 가장 높은 채널은 <b>${esc(hi.k)}</b> ${hi.r}% (${hi.h}/${hi.n}), 가장 낮은 채널은 <b>${esc(lo.k)}</b> ${lo.r}% (${lo.h}/${lo.n}).` });
+      }
+      const pk = Object.keys(cur.ptBase).filter(k => k !== '부위미상' && cur.ptBase[k] >= MIN_N).map(k => ({ k, n: cur.ptBase[k], h: cur.resvPt[k] || 0, r: pct1(cur.resvPt[k] || 0, cur.ptBase[k]) })).sort((a, b) => b.r - a.r);
+      if (pk.length >= 2) out.push({ ic: '💡', h: `부위 중에서는 <b>${esc(pk[0].k)}</b> 문의가 예약으로 가장 잘 이어졌어요 (${pk[0].r}%, ${pk[0].h}/${pk[0].n}). 가장 낮은 부위는 <b>${esc(pk[pk.length - 1].k)}</b> ${pk[pk.length - 1].r}%.` });
+    }
+    if (cur.notesDays && cur.notesBase) out.push({ ic: '💬', h: `문의 ${cur.notesBase}건 중 <b>비용 문의 ${cur.cost}건 (${pct1(cur.cost, cur.notesBase)}%)</b>${cur.dateAsk ? `, 상담날짜 문의 ${cur.dateAsk}건` : ''}.` });
+    if (weak[0]) out.push({ ic: '⚠️', h: `<b>${esc(weak[0].cat)}</b> 문의가 이전보다 줄었어요 (${weak[0].before}→${weak[0].now}건). 아래 실행 플랜을 확인해주세요.` });
+    const np = cur.total ? Math.round(cur.noPart / cur.total * 100) : 0;
+    if (np >= 15) out.push({ ic: '🔎', h: `부위가 적히지 않은 문의가 ${cur.noPart}건 (${np}%)이라 부위 통계는 참고용이에요.` });
+    return out;
+  }
+
   /* ======================= 대시보드 ======================= */
   function renderHome() {
-    setAccent(S.region);
+    setAccent(S.region); CHARTS = {};
     const st = S.settings, p = IW.periodFor(S.ptype, S.anchor, st), pp = IW.shiftPeriod(p, -1, st);
     const cur = IW.aggregate(S.records, S.region, p.start, p.end), cmp = fairPrev(S.region, p, pp, cur), prev = cmp.prev;
     const chs = sorted(cur.channels).filter(x => x[1] > 0), pts = sorted(cur.parts).filter(x => x[0] !== '부위미상');
     const weak = IW.weakParts(cur, prev, st);
     const wd = workdays(p.start, p.end);
     const npPct = cur.total ? Math.round(cur.noPart / cur.total * 100) : 0;
+    // 예약·비용 칸을 한 번도 쓰지 않은 권역(지금 영어권)은 '0%'가 아니라 지표 자체를 숨김
+    const uses = usedFields(S.region);
+    if (!uses.resv) { cur.resvDays = 0; prev.resvDays = 0; }
+    if (!uses.cost) { cur.notesDays = 0; prev.notesDays = 0; }
+    const hasResv = cur.resvDays > 0 && cur.resvBase > 0, hasNotes = cur.notesDays > 0 && cur.notesBase > 0;
+    const serType = p.type === 'week' ? 'week' : 'month';
+    const ser = p.type === 'year' ? null : periodSeries(serType, p.start, 12, S.region);
+    if (ser) ser.forEach(x => { if (!uses.resv) x.a.resvDays = 0; if (!uses.cost) x.a.notesDays = 0; });
+    const ptName = serType === 'week' ? '주' : '달';
 
-    let sum = '';
+    let sum = '', ins = [];
     if (cur.total === 0) sum = !Object.keys(S.records).length && S.source === 'cloud'
       ? `<b>아직 올라온 통계가 없어요.</b><br>편집자가 PC에서 DB를 저장하면 여기에 자동으로 업데이트 알림이 떠요.`
       : !Object.keys(S.records).length && window.matchMedia('(max-width:760px)').matches
@@ -1346,32 +1522,98 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       sum = `${cmp.partial ? `<span class="tag warn" style="margin-right:6px">진행 중 · ${esc(cmp.until)}까지</span>` : ''}${esc(p.label)} ${regionLabel(S.region)} 문의는 <b>${cur.total}건</b>`;
       if (prev.days) sum += `으로, 이전 ${periodName(p.type)}${cmp.partial ? ' 같은 기간' : ''}(${prev.total}건)보다 ${delta(cur.total, prev.total)}`;
       sum += '. ';
-      if (chs[0]) sum += `가장 많은 채널은 <b>${esc(chs[0][0])}</b>(${chs[0][1]}건)`;
-      if (pts[0]) sum += `, 가장 많이 찾은 부위는 <b>${esc(pts[0][0])}</b>(${pts[0][1]}건)이에요. `;
-      if (weak[0]) sum += `<b>${esc(weak[0].cat)}</b>${josa(weak[0].cat, '은', '는')} 이전보다 줄었어요(${weak[0].before}→${weak[0].now}건). `;
-      if (cur.resvDays) sum += `예약은 <b>${cur.resv}건</b>, 전환율 <b>${rate(cur.resv, cur.resvBase)}%</b>${prev.resvDays ? ` (이전 ${rate(prev.resv, prev.resvBase)}%)` : ''}. `;
-      if (npPct >= 25) sum += `부위미상이 ${npPct}%라 부위 통계는 참고용으로 봐주세요.`;
+      if (hasResv) sum += `예약 <b>${cur.resv}건</b> · 전환율 <b>${rate(cur.resv, cur.resvBase)}%</b>${prev.resvDays && prev.resvBase ? ` (이전 ${rate(prev.resv, prev.resvBase)}%)` : ''}. `;
+      if (chs[0]) sum += `1위 채널 <b>${esc(chs[0][0])}</b>(${chs[0][1]}건)`;
+      if (pts[0]) sum += `, 1위 부위 <b>${esc(pts[0][0])}</b>(${pts[0][1]}건).`;
+      ins = buildInsights(cur, prev, cmp, p, ser, weak);
     }
 
-    const maxCh = Math.max(1, ...Object.values(cur.channels));
     const chList = Object.keys(cur.channels).length ? sorted(cur.channels) : [];
+    const maxCh = Math.max(1, ...Object.values(cur.channels));
     const partOrder = st.categories.concat(['부위미상']).filter(c => (cur.parts[c] || 0) > 0 || st.categories.includes(c));
     const maxPt = Math.max(1, ...Object.values(cur.parts));
+    const pv = prev.days ? prev : null;
+    const dTxt = (a, b) => { if (!pv) return ''; const d = a - b; return d === 0 ? `<span class="flat">0</span>` : `<span class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</span>`; };
 
-    // 추이
-    let colsData = [];
-    if (p.type === 'year') {
-      for (let m = 1; m <= 12; m++) { const s = IW.ymd(+p.start.slice(0, 4), m, 1), e = IW.ymd(+p.start.slice(0, 4), m, new Date(+p.start.slice(0, 4), m, 0).getDate()); const a = IW.aggregate(S.records, S.region, s, e); colsData.push({ v: a.total, d: m + '월', has: a.days > 0 }); }
-    } else {
-      let d = p.start; while (d <= p.end) { const sun = IW.dow(d) === 0; colsData.push({ v: cur.byDate[d] || 0, d: (p.type === 'week' ? DOW[IW.dow(d)] + ' ' : '') + (+d.slice(8)), has: d in cur.byDate, sun, future: d > todayStr() }); d = IW.addDays(d, 1); }
+    // ① 12주/12개월 문의 추이
+    let trendCard = '', convCard = '', chMulti = '';
+    if (ser) {
+      const past = ser.slice(0, -1).filter(x => x.has), avg = past.length >= 3 ? past.reduce((s, x) => s + x.a.total, 0) / past.length : null;
+      const items = ser.map((x, i) => { const last = i === ser.length - 1; return { x: shortLab(x.p), v: x.has ? x.a.total : null, hi: last, partial: last && cmp.partial,
+        tip: tipA(x.p.label, [x.has ? `문의 ${x.a.total}건` : '데이터 없음', x.has && x.a.resvDays && x.a.resvBase ? `예약 ${x.a.resv}건 · 전환율 ${pct1(x.a.resv, x.a.resvBase)}%` : '', last && cmp.partial ? `진행 중 (${esc(cmp.until)}까지)` : '']) }; });
+      trendCard = `<div class="card"><h3>${ptName === '주' ? '최근 12주' : '최근 12개월'} 문의 추이 <small>TREND</small></h3>
+        ${chartBox('trend', (W, H) => colChart(W, H, { items, avg, emph: true, twoLine: serType === 'week', label: '기간별 문의 수' }), 210)}
+        <div class="muted small">진한 막대가 지금 보는 ${ptName}${cmp.partial ? ' (진행 중이라 연하게)' : ''}${avg != null ? ` · 가로 점선 = 이전 ${past.length}${ptName} 평균 ${Math.round(avg)}건` : ''} · 바닥의 작은 점선 칸 = 데이터 없음</div>
+        ${tableView(['기간', '문의', '예약', '전환율'], ser.map(x => [x.p.label, x.has ? x.a.total : '없음', x.has && x.a.resvDays ? x.a.resv : '–', x.has && x.a.resvBase ? pct1(x.a.resv, x.a.resvBase) + '%' : '–']))}</div>`;
+      // ② 전환율·비용문의 비율 추이 (같은 % 단위, 축 하나)
+      if (ser.some(x => x.a.resvDays && x.a.resvBase)) {
+        const xs = ser.map(x => shortLab(x.p));
+        const conv = ser.map(x => x.a.resvDays && x.a.resvBase ? pct1(x.a.resv, x.a.resvBase) : null);
+        const cost = ser.map(x => x.a.notesDays && x.a.notesBase ? pct1(x.a.cost, x.a.notesBase) : null);
+        const tips = ser.map((x, i) => tipA(x.p.label, [conv[i] != null ? `예약 전환율 ${conv[i]}% (${x.a.resv}/${x.a.resvBase})` : '예약 정보 없음', cost[i] != null ? `비용 문의 비율 ${cost[i]}% (${x.a.cost}/${x.a.notesBase})` : '']));
+        const series = [{ name: '전환율', color: 'var(--accent)', pts: conv }];
+        if (cost.some(v => v != null)) series.push({ name: '비용문의', color: 'var(--ink2)', dash: true, pts: cost });
+        convCard = `<div class="card"><h3>예약 전환율 · 비용 문의 비율 <small>RATE</small></h3>
+          <div class="legend" style="margin:-4px 0 6px"><span><i style="background:var(--accent);height:3px;vertical-align:3px;width:14px"></i>예약 전환율 (예약÷문의)</span>${series[1] ? `<span><i style="border-top:2px dashed var(--ink2);height:0;width:14px;vertical-align:3px;border-radius:0"></i>비용 문의 비율</span>` : ''}</div>
+          ${chartBox('conv', (W, H) => lineChart(W, H, { xs, series, tips, twoLine: serType === 'week', label: '전환율 추이' }), 200)}
+          ${tableView(['기간', '예약 전환율', '비용 문의 비율'], ser.map((x, i) => [x.p.label, conv[i] != null ? conv[i] + '%' : '–', cost[i] != null ? cost[i] + '%' : '–']))}</div>`;
+      }
+      // ③ 주요 채널 4개 작은 차트 (같은 축)
+      const tot = {}; ser.forEach(x => { for (const [k, v] of Object.entries(x.a.channels)) tot[k] = (tot[k] || 0) + v; });
+      const top4 = sorted(tot).filter(x => x[1] > 0).slice(0, 4).map(x => x[0]);
+      if (top4.length) {
+        const gmax = Math.max(1, ...ser.flatMap(x => top4.map(k => x.a.channels[k] || 0)));
+        chMulti = `<div class="card"><h3>주요 채널 ${ptName === '주' ? '12주' : '12개월'} 흐름 <small>BY CHANNEL</small></h3><div class="sm4">${top4.map((k, j) => {
+          const it = ser.map((x, i) => ({ x: i === ser.length - 1 || i === 0 ? shortLab(x.p).join(' ') : '', v: x.has ? (x.a.channels[k] || 0) : null, hi: i === ser.length - 1, partial: i === ser.length - 1 && cmp.partial, tip: tipA(`${k} · ${x.p.label}`, [x.has ? `${x.a.channels[k] || 0}건` : '데이터 없음']) }));
+          const lastV = it[it.length - 1].v;
+          return `<div><div class="smh"><b>${esc(k)}</b><span class="muted small">${ptName === '주' ? '이번 주' : '이번 달'} ${lastV == null ? '–' : lastV + '건'}</span></div>${chartBox('ch' + j, (W, H) => colChart(W, H, { items: it, emph: true, minMax: gmax, label: k + ' 추이' }), 120)}</div>`; }).join('')}</div>
+          <div class="muted small">네 차트의 세로 눈금이 같아서 채널끼리 크기를 바로 비교할 수 있어요.</div></div>`;
+      }
     }
-    const maxCol = Math.max(1, ...colsData.map(c => c.v));
+    // ④ 이번 기간 일별(또는 월별) 막대
+    let dItems = [];
+    if (p.type === 'year') {
+      const y = +p.start.slice(0, 4);
+      for (let m = 1; m <= 12; m++) { const s = IW.ymd(y, m, 1), e = IW.ymd(y, m, new Date(y, m, 0).getDate()); const a = IW.aggregate(S.records, S.region, s, e); dItems.push({ x: m + '월', v: a.days ? a.total : null, tip: tipA(`${y}년 ${m}월`, [a.days ? `문의 ${a.total}건 (${a.days}일 입력)` : '데이터 없음', uses.resv && a.resvDays && a.resvBase ? `예약 ${a.resv}건 · ${pct1(a.resv, a.resvBase)}%` : '']) }); }
+    } else {
+      let d = p.start; while (d <= p.end) { const w = IW.dow(d); if (w !== 0) { const has = d in cur.byDate, r = S.region === 'all' ? null : S.records[`${d}|${S.region}`];
+        dItems.push({ x: p.type === 'week' ? [DOW[w], String(+d.slice(8))] : String(+d.slice(8)), v: has ? cur.byDate[d] : null, hi: d === todayStr(),
+          tip: tipA(`${+d.slice(5, 7)}/${+d.slice(8)} (${DOW[w]})`, [has ? `문의 ${cur.byDate[d]}건` : d > todayStr() ? '아직 지나지 않은 날' : '미입력 (공휴일이면 정상)', r && r.hasResv && uses.resv ? `예약 ${r.resv}건` : '', r && r.hasNotes && uses.cost ? `비용 문의 ${r.cost}건` : '']) }); }
+        d = IW.addDays(d, 1); }
+    }
+    const dailyCard = `<div class="card"><h3>${p.type === 'year' ? '월별' : '일별'} 문의 <small>${esc(p.label)}</small></h3>
+      ${chartBox('daily', (W, H) => colChart(W, H, { items: dItems, twoLine: p.type === 'week', label: '일별 문의' }), 210)}
+      <div class="muted small">${p.type === 'year' ? '' : '일요일(휴진)은 빼고 그려요 · '}빈 점선 칸은 아직 입력이 없는 날</div>
+      ${tableView([p.type === 'year' ? '월' : '날짜', '문의'], dItems.map(i => [Array.isArray(i.x) ? i.x.join(' ') : i.x, i.v == null ? '없음' : i.v]))}</div>`;
+    // ⑤ 요일 패턴
+    const wdEnd = p.end < todayStr() ? p.end : todayStr();
+    const wp = S.region === 'all' ? null : weekdayPattern(S.region, wdEnd);
+    let wpCard = '';
+    if (wp && wp.some(x => x.avg != null)) {
+      const mx = Math.max(...wp.map(x => x.avg || 0)), best = wp.find(x => x.avg === mx), lowest = wp.filter(x => x.avg != null).sort((a, b) => a.avg - b.avg)[0];
+      const it = wp.map(x => ({ x: DOW[x.w], v: x.avg == null ? null : Math.round(x.avg * 10) / 10, hi: x === best, tip: tipA(`${DOW[x.w]}요일`, [x.avg == null ? '데이터 없음' : `평균 ${Math.round(x.avg * 10) / 10}건`, `${x.n}일 기준 (합계 ${x.sum}건)`]) }));
+      wpCard = `<div class="card"><h3>요일별 평균 문의 <small>최근 8주</small></h3>
+        ${chartBox('wday', (W, H) => colChart(W, H, { items: it, emph: true, label: '요일별 평균' }), 190)}
+        <div class="small" style="margin-top:4px">${best ? `<b>${DOW[best.w]}요일</b>에 문의가 가장 많고 (평균 ${Math.round(best.avg * 10) / 10}건)` : ''}${lowest && lowest !== best ? `, <b>${DOW[lowest.w]}요일</b>이 가장 적어요 (${Math.round(lowest.avg * 10) / 10}건). 광고·게시물 시간을 정할 때 참고하세요.` : ''}</div>
+        <div class="muted small">${IW.addDays(wdEnd, -55).slice(5).replace('-', '/')}~${wdEnd.slice(5).replace('-', '/')} 중 입력된 날만 평균</div></div>`;
+    }
+    // ⑥ 전환율 막대
+    const convBars = hasResv ? `<div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>채널별 예약 전환율 <small>예약 ÷ 문의</small></h3>${rateBars(cur.chBase, cur.resvCh, +rate(cur.resv, cur.resvBase))}</div>
+      <div class="card"><h3>부위별 예약 전환율 <small>예약 ÷ 문의</small><span class="right tag" data-tip="${esc('한 문의에 부위가 여러 개면 각 부위에 한 번씩 들어가요')}">중복 집계</span></h3>${rateBars(cur.ptBase, cur.resvPt, +rate(cur.resv, cur.resvBase), { skip: [] })}</div>
+    </div>` : '';
 
-    // 권역 분포 (전체일 때)
     const regionRow = S.region === 'all' ? `<div class="row" style="margin-top:8px">${Object.keys(REGIONS).map(r => `<span class="tag ${r}">${REGIONS[r].label} ${cur.regions[r] || 0}건</span>`).join('')}</div>` : '';
-
     const recsInPeriod = Object.values(S.records).filter(r => r.date >= p.start && r.date <= p.end && (S.region === 'all' || r.region === S.region));
     const warnRecs = recsInPeriod.filter(r => (r.warnings || []).length);
+    const cmpName = `이전 ${periodName(p.type)}${cmp.partial ? ' 같은 기간' : ''}`;
+
+    const kpis = [`<div class="card kpi"><div class="lab">총 문의<span>TOTAL</span></div><div class="num">${cur.total}<small>건</small></div><div class="sub">${cmpName} 대비 ${prev.days ? delta(cur.total, prev.total) : '<span class="flat">비교 데이터 없음</span>'}</div></div>`];
+    if (hasResv) kpis.push(`<div class="card kpi"><div class="lab">예약 · 전환율<span>CONVERSION</span></div><div class="num">${rate(cur.resv, cur.resvBase)}<small>%</small></div><div class="sub">예약 ${cur.resv}건 / 문의 ${cur.resvBase}건 ${prev.resvDays && prev.resvBase ? rateDelta(+rate(cur.resv, cur.resvBase), +rate(prev.resv, prev.resvBase)) : ''}${S.region === 'all' ? '<br><span class="muted small">예약 칸이 있는 데이터 기준</span>' : ''}</div></div>`);
+    if (hasNotes) kpis.push(`<div class="card kpi"><div class="lab">비용 문의<span>PRICE ASK</span></div><div class="num">${cur.cost}<small>건</small></div><div class="sub">문의의 ${rate(cur.cost, cur.notesBase)}% ${prev.notesDays && prev.notesBase ? rateDelta(+rate(cur.cost, cur.notesBase), +rate(prev.cost, prev.notesBase)) : ''}${cur.dateAsk ? `<br><span class="muted small">상담날짜 문의 ${cur.dateAsk}건</span>` : ''}</div></div>`);
+    if (kpis.length < 3) kpis.push(`<div class="card kpi"><div class="lab">1위 채널<span>TOP CHANNEL</span></div><div class="num" style="font-size:1.6rem">${chs[0] ? esc(chs[0][0]) : '–'}</div><div class="sub">${chs[0] ? `${chs[0][1]}건 · 전체의 ${Math.round(chs[0][1] / cur.total * 100)}%` : '데이터 없음'}</div></div>`);
+    if (kpis.length < 3) kpis.push(`<div class="card kpi"><div class="lab">1위 부위<span>TOP AREA</span></div><div class="num" style="font-size:1.6rem">${pts[0] ? esc(pts[0][0]) : '–'}</div><div class="sub">${pts[0] ? `${pts[0][1]}건 · 부위미상 ${npPct}%` : '데이터 없음'}</div></div>`);
+    kpis.push(`<div class="card kpi"><div class="lab">입력 현황<span>COVERAGE</span></div><div class="num">${countDays(recsInPeriod)}<small>/ ${wd}일</small></div><div class="sub">${coverageNote(recsInPeriod, wd)}</div></div>`);
 
     $('#main').innerHTML = `
     <div class="topbar">
@@ -1381,30 +1623,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="row"><button class="btn sm" id="pPrev">◀</button><b style="min-width:120px;text-align:center">${esc(p.label)}</b><button class="btn sm" id="pNext">▶</button><button class="btn sm ghost" id="pToday">오늘</button></div>
       ${oneClickBtn()}
     </div>
-    <div class="card summary">${sum}${regionRow}${cmp.partial && cur.total ? `<div class="muted small" style="margin-top:8px">ⓘ ${esc(cmp.note)}</div>` : ''}</div>
-    <div class="grid g4" style="margin-top:16px">
-      <div class="card kpi"><div class="lab">총 문의<span>TOTAL</span></div><div class="num">${cur.total}<small>건</small></div><div class="sub">이전 ${periodName(p.type)}${cmp.partial ? ' 같은 기간' : ''} 대비 ${prev.days ? delta(cur.total, prev.total) : '<span class="flat">비교 데이터 없음</span>'}</div></div>
-      <div class="card kpi"><div class="lab">1위 채널<span>TOP CHANNEL</span></div><div class="num" style="font-size:1.6rem">${chs[0] ? esc(chs[0][0]) : '–'}</div><div class="sub">${chs[0] ? `${chs[0][1]}건 · 전체의 ${Math.round(chs[0][1] / cur.total * 100)}%` : '데이터 없음'}</div></div>
-      ${cur.resvDays ? `<div class="card kpi"><div class="lab">예약 · 전환율<span>CONVERSION</span></div><div class="num">${rate(cur.resv, cur.resvBase)}<small>%</small></div><div class="sub">예약 ${cur.resv}건 / 문의 ${cur.resvBase}건 ${prev.resvDays ? rateDelta(+rate(cur.resv, cur.resvBase), +rate(prev.resv, prev.resvBase)) : ''}${S.region === 'all' ? '<br><span class="muted small">예약 정보가 있는 국내권 기준</span>' : ''}</div></div>` : `<div class="card kpi"><div class="lab">1위 부위<span>TOP AREA</span></div><div class="num" style="font-size:1.6rem">${pts[0] ? esc(pts[0][0]) : '–'}</div><div class="sub">${pts[0] ? `${pts[0][1]}건 · 부위미상 ${npPct}%` : '데이터 없음'}</div></div>`}
-      <div class="card kpi"><div class="lab">입력 현황<span>COVERAGE</span></div><div class="num">${countDays(recsInPeriod)}<small>/ ${wd}일</small></div><div class="sub">${coverageNote(recsInPeriod, wd)}</div></div>
-    </div>
+    <div class="card summary">${sum}${regionRow}
+      ${ins.length ? `<ul class="ins">${ins.map(i => `<li><span class="ic">${i.ic}</span><span>${i.h}</span></li>`).join('')}</ul>` : ''}
+      ${cmp.partial && cur.total ? `<div class="muted small" style="margin-top:8px">ⓘ ${esc(cmp.note)}</div>` : ''}
+      ${cur.total ? `<div class="muted small" style="margin-top:6px">ⓘ 비율은 문의 ${MIN_N}건 이상일 때만 '가장 높다/낮다'로 판단해요. 그래프에 손가락을 대거나 마우스를 올리면 정확한 숫자가 나와요.</div>` : ''}</div>
+    <div class="grid g4" style="margin-top:16px">${kpis.slice(0, 4).join('')}</div>
+    ${cur.total ? `<div class="grid g2" style="margin-top:16px">${trendCard || ''}${dailyCard}</div>` : ''}
+    ${convCard ? `<div style="margin-top:16px">${convCard}</div>` : ''}
     <div class="grid g2" style="margin-top:16px">
-      <div class="card"><h3>채널별 문의 <small>BY CHANNEL</small></h3>
-        ${chList.length ? `<div class="bars">${chList.map(([k, v]) => `<div class="bar ${v ? '' : 'zero'}" title="${esc(k)} ${v}건"><span class="nm">${esc(k)}</span><span class="tr"><span class="fl" style="width:${v / maxCh * 100}%"></span></span><span class="vl">${v}<small>${cur.resvDays && cur.chBase[k] ? `예약 ${cur.resvCh[k] || 0} · ${rate(cur.resvCh[k] || 0, cur.chBase[k])}%` : (cur.total ? Math.round(v / cur.total * 100) + '%' : '')}</small></span></div>`).join('')}</div>` : emptyBox()}
+      <div class="card"><h3>채널별 문의 <small>BY CHANNEL</small>${pv ? `<span class="right muted small">${esc(cmpName)} 대비</span>` : ''}</h3>
+        ${chList.length ? `<div class="bars">${chList.map(([k, v]) => `<div class="bar ${v ? '' : 'zero'}" data-tip="${tipA(k, [`${v}건 · 전체의 ${cur.total ? Math.round(v / cur.total * 100) : 0}%`, pv ? `${esc(cmpName)} ${prev.channels[k] || 0}건` : ''])}"><span class="nm">${esc(k)}</span><span class="tr"><span class="fl" style="width:${v / maxCh * 100}%"></span></span><span class="vl">${v}<small>${cur.total ? Math.round(v / cur.total * 100) + '%' : ''} ${dTxt(v, prev.channels[k] || 0)}</small></span></div>`).join('')}</div>` : emptyBox()}
       </div>
-      <div class="card"><h3>부위별 문의 <small>BY AREA</small><span class="right tag" title="한 문의에 부위가 여러 개면 각각 셉니다">중복 집계</span></h3>
-        ${cur.total ? `<div class="bars">${partOrder.map(c => { const v = cur.parts[c] || 0; return `<div class="bar ${v ? '' : 'zero'} ${c === '부위미상' ? 'muted' : ''}"><span class="nm">${esc(c)}</span><span class="tr"><span class="fl" style="width:${v / maxPt * 100}%"></span></span><span class="vl">${v}${cur.resvDays && cur.ptBase[c] ? `<small>예약 ${cur.resvPt[c] || 0} · ${rate(cur.resvPt[c] || 0, cur.ptBase[c])}%</small>` : ''}</span></div>`; }).join('')}</div>` : emptyBox()}
+      <div class="card"><h3>부위별 문의 <small>BY AREA</small><span class="right tag" data-tip="${esc('한 문의에 부위가 여러 개면 각각 셉니다')}">중복 집계</span></h3>
+        ${cur.total ? `<div class="bars">${partOrder.map(c => { const v = cur.parts[c] || 0; return `<div class="bar ${v ? '' : 'zero'} ${c === '부위미상' ? 'muted' : ''}" data-tip="${tipA(c, [`${v}건`, pv ? `${esc(cmpName)} ${prev.parts[c] || 0}건` : ''])}"><span class="nm">${esc(c)}</span><span class="tr"><span class="fl" style="width:${v / maxPt * 100}%"></span></span><span class="vl">${v}<small>${dTxt(v, prev.parts[c] || 0)}</small></span></div>`; }).join('')}</div>` : emptyBox()}
       </div>
     </div>
-    <div class="card" style="margin-top:16px"><h3>${p.type === 'year' ? '월별' : '일별'} 추이 <small>TREND</small><span class="right legend"><span><i style="background:var(--accent)"></i>문의</span><span><i style="border:1px dashed var(--muted)"></i>미입력</span><span><i style="background:var(--chip)"></i>일요일</span></span></h3>
-      <div class="cols">${colsData.map(c => `<div class="c" title="${esc(c.d)} ${c.v}건"><span class="v">${c.has ? c.v : ''}</span><div class="b ${c.sun ? 'sun' : (!c.has && !c.future ? 'none' : '')}" style="height:${c.has ? Math.max(2, c.v / maxCol * 130) : (c.sun || c.future ? 2 : 14)}px"></div><span class="d">${esc(c.d)}</span></div>`).join('')}</div>
-    </div>
+    ${convBars}
+    ${cur.total && (chMulti || wpCard) ? `<div class="grid g2" style="margin-top:16px">${chMulti}${wpCard}</div>` : ''}
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>떨어지는 부위 & 실행 플랜 <small>WATCH LIST</small></h3>${weakHtml(weak, cur, prev, p)}</div>
       <div class="card"><h3>채널 × 부위 <small>MATRIX</small></h3>${heatHtml(cur)}</div>
     </div>
     ${warnRecs.length ? `<div class="card" style="margin-top:16px"><h3>확인할 경고 <small>CHECK</small><span class="right tag warn">${warnRecs.length}일</span></h3>${warnRecs.sort((a, b) => a.date < b.date ? -1 : 1).map(r => `<details><summary>${r.date} · ${REGIONS[r.region].label} · 경고 ${r.warnings.length}개</summary><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`).join('')}</div>` : ''}
     `;
+    drawCharts();
     bindSeg('region', r => { S.region = r; render(); });
     bindSeg('ptype', t => { S.ptype = t; render(); });
     $('#pPrev').onclick = () => { S.anchor = IW.shiftPeriod(p, -1, st).start; render(); };
@@ -1496,23 +1738,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
 
   /* ======================= 데이터 입력 ======================= */
-  const XLS_RE = /\.xls[xm]?$/i;
+  const XLS_RE = /\.xls[xmb]?$/i;
   function isDataFile(name) { return XLS_RE.test(name) && !name.startsWith('~$') && !name.startsWith('.'); }
 
   async function addFiles(items, opts = {}) {
-    let added = 0, skipped = 0, ignored = 0;
+    let added = 0, skipped = 0, ignored = 0; const why = [];
     for (const it of items) {
       const name = it.path.split('/').pop();
-      if (!isDataFile(name)) { ignored++; continue; }
+      if (!isDataFile(name)) { ignored++; why.push(`${name}: 엑셀 파일(.xlsx/.xls)이 아니라서 건너뜀${name.startsWith('~$') ? ' (엑셀이 열려 있을 때 생기는 임시 파일)' : ''}`); continue; }
       let file = it.file;
       if (!file && it.handle) { try { file = await it.handle.getFile(); } catch (e) { S.walkErrors.push(`${it.path}: 파일을 열 수 없음 (${e.name})`); continue; } }
       const det = IW.detectDate(it.path);
-      const region = opts.region || IW.detectRegion(it.path) || S.dropRegion || null;
+      const pathRegion = opts.region || IW.detectRegion(it.path); const region = pathRegion || S.dropRegion || null;
       const key = det.date && region ? `${det.date}|${region}` : null;
       const ex = key ? S.records[key] : null;
-      if (ex && !S.rescanAll && ex.source && ex.source.lastModified === file.lastModified && ex.source.size === file.size) { skipped++; continue; }
-      if (S.queue.some(q => q.path === it.path)) continue;
-      S.queue.push({ id: Math.random().toString(36).slice(2), file, path: it.path, region, date: det.date, dateWarn: det.warnings, status: 'wait', include: true });
+      if (ex && !S.rescanAll && ex.source && ex.source.lastModified === file.lastModified && ex.source.size === file.size) { skipped++; why.push(`${name}: 이미 같은 내용이 저장돼 있어서 건너뜀 (다시 넣으려면 "변경 없는 파일도 전부 다시 분석" 체크)`); continue; }
+      // 같은 이름이 대기열에 이미 있으면 새로 고른 파일로 바꿈 (예전엔 조용히 무시돼서 안 들어간 것처럼 보였음)
+      S.queue = S.queue.filter(q => q.path !== it.path);
+      S.queue.push({ id: Math.random().toString(36).slice(2), file, path: it.path, region, regionGuess: !pathRegion, date: det.date, dateWarn: det.warnings, status: 'wait', include: true });
       added++;
     }
     S.reviewed = false;
@@ -1521,6 +1764,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     if (opts.silent) return stats;
     render();
     toast(`${added}개 추가` + (skipped ? ` · 변경 없는 파일 ${skipped}개 건너뜀` : '') + (ignored ? ` · 엑셀 아닌 파일 ${ignored}개 무시` : ''), 4000);
+    if (!added && !S.autoAfterAdd) {
+      modal(`<h3 style="margin:0 0 10px">파일이 대기열에 들어가지 않았어요</h3>
+        <div class="warnbox">${why.length ? `<ul style="margin:0;padding-left:18px">${why.slice(0, 20).map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : `받은 파일이 없어요 (${items.length}개). 파일 선택 창에서 파일을 고른 뒤 <b>열기</b>를 눌렀는지 확인해주세요.`}</div>
+        <p class="muted small">이 창을 캡처해서 보내주면 원인을 바로 확인할 수 있어요.</p>
+        <div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="document.getElementById('overlay').classList.remove('show')">닫기</button></div>`);
+    }
     if (added) {   // 넣자마자 바로 분석
       await runAnalysis();
       if (S.autoAfterAdd) { S.autoAfterAdd = false; const sv = await saveQueue({ auto: true }); showReport(Object.assign(stats, sv)); }
@@ -1574,6 +1823,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         S.autoAfterAdd = true; S.dropRegion = 'en'; return $('#dirInputGlobal').click();
       }
     }
+    // 연결된 원본이 있으면 자동 업데이트와 같은 방식으로 지금 바로 확인
+    for (const r of regions) { try { await ensureRead(S.srcHandles[r]); } catch (e) { } }
+    return autoSyncOnce({ force: true, report: true });
     const items = [];
     for (const r of regions) {
       const h = S.srcHandles[r];
@@ -1589,6 +1841,95 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const sv = stats.added ? await saveQueue({ auto: true }) : { saved: [] };
     progressClose();
     showReport(Object.assign(stats, sv));
+  }
+
+  /* ---------- 자동 업데이트: 연결한 파일·폴더가 바뀌면 알아서 읽고 저장 ---------- */
+  const SYNC_MS = 2 * 60 * 1000;
+  function seenGet() { try { return JSON.parse(localStorage.getItem('iw_sync_seen') || '{}'); } catch (e) { return {}; } }
+  function seenSet(o) { try { localStorage.setItem('iw_sync_seen', JSON.stringify(o)); } catch (e) { } }
+  function syncOn() { return localGet('autosync') !== '0'; }
+  async function autoSyncOnce(opts = {}) {
+    if ((!syncOn() && !opts.force) || S.sync.running) return;
+    if (S.source === 'cloud' || ENV.sandboxed || !IWStore.fsSupported() || IWStore.memoryOnly) return;
+    const srcs = Object.entries(S.srcHandles).filter(([r, h]) => h);
+    if (!srcs.length) return;
+    if (IWStore.pending) { S.sync.needPerm = ['저장 폴더']; renderPill(); render(); return; }   // 다른 곳에 저장되지 않게
+    S.sync.running = true; S.sync.needPerm = []; S.walkErrors = [];
+    const seen = seenGet(), found = [], retry = [];
+    let unchanged = 0;
+    try {
+      for (const [r, h] of srcs) {
+        let perm = 'denied'; try { perm = await h.queryPermission({ mode: 'read' }); } catch (e) { }
+        if (perm !== 'granted') { S.sync.needPerm.push(`${REGIONS[r].label} (${h.name})`); continue; }
+        const list = [];
+        try { if (h.kind === 'file') list.push({ handle: h, path: h.name }); else await walkHandle(h, h.name + '/', list, 0); }
+        catch (e) { S.walkErrors.push(`${REGIONS[r].label} ${h.name}: 읽기 실패 (${e.name}) — NAS 연결을 확인하세요`); continue; }
+        for (const it of list) {
+          let f; try { f = await it.handle.getFile(); } catch (e) { retry.push(it.path); S.walkErrors.push(`${it.path}: 읽기 실패 (${e.name}) — 다음 확인 때 다시 시도`); continue; }
+          const sig = f.lastModified + ':' + f.size;
+          if (!opts.all && seen[it.path] === sig) { unchanged++; continue; }
+          const det = IW.detectDate(it.path);
+          const ex = det.date ? S.records[`${det.date}|${r}`] : null;
+          if (!opts.all && ex && ex.source && ex.source.lastModified === f.lastModified && ex.source.size === f.size) { seen[it.path] = sig; unchanged++; continue; }
+          found.push({ id: Math.random().toString(36).slice(2), file: f, path: it.path, region: r, regionGuess: h.kind === 'file', date: det.date, dateWarn: det.warnings, status: 'wait', include: true, sig, auto: true });
+        }
+      }
+      let saved = [];
+      const issues = [];
+      if (found.length) {
+        if (opts.report) progressOpen('바뀐 파일 분석 중', `${found.length}개`);
+        let i = 0;
+        for (const x of found) {
+          i++;
+          try { await analyzeOne(x, []); } catch (e) { x.status = 'error'; x.error = '분석 중 오류: ' + e.message; }
+          if (opts.report) progressSet(i, found.length, `${i} / ${found.length} · ${x.path.split('/').pop()}`);
+        }
+        // 주간 통합 파일은 숫자가 실제로 바뀐 날만 저장 (안 바뀐 날까지 다시 올리지 않게)
+        const fp = r => JSON.stringify([r.parser === 'weekly-v1' ? 'w' : 'd', r.total, r.channels, r.parts, r.matrix, r.resv, r.resvCh, r.resvPt, r.cost, r.dateAsk, r.noPart, r.partExtra]);
+        for (const x of found) if (x.kind === 'weekly' && x.records) {
+          x.records = x.records.filter(r => !S.records[r.key] || fp(S.records[r.key]) !== fp(r));
+          if (!x.records.length && !(x.deletes || []).length) x.include = false;   // 바뀐 날 없음
+        }
+        for (const x of found) {
+          if (x.status === 'error') { x.include = false; issues.push({ path: x.path, msg: x.error }); continue; }
+          if (x.check && x.check.bad.length) { x.include = false; issues.push({ path: x.path, msg: `홍보팀 표와 다른 칸 ${x.check.bad.reduce((n, b) => n + b.diffs.length, 0)}개 — 자동 저장을 멈췄어요. 데이터 입력에서 확인해주세요` }); }
+        }
+        const manual = S.queue.filter(q => !found.some(f => f.path === q.path));
+        S.queue = found.filter(x => x.status === 'done' && x.include);
+        if (S.queue.length) { const r = await saveQueue({ auto: true, keepView: !opts.report }); saved = r.saved || []; }
+        // 잠깐 읽기 실패(다른 PC에서 저장 중 등)는 다음에 다시 시도, 나머지는 처리 완료로 기록
+        for (const x of found) { const tmp = x.status === 'error' && /읽지 못했어요|NAS에서|분석 중 오류/.test(x.error || ''); if (!tmp) seen[x.path] = x.sig; }
+        // 확인이 필요한 것만 대기열에 남겨서 보여줌
+        S.queue = manual.concat(found.filter(x => issues.some(i => i.path === x.path)));
+        S.lastCheck = found.map(x => x.check).filter(Boolean);
+        if (opts.report) progressClose();
+      }
+      seenSet(seen);
+      S.sync.last = new Date().toISOString();
+      S.sync.issues = issues;
+      if (saved.length) { S.sync.lastSaved = { n: saved.length, at: S.sync.last }; if (!opts.report) toast(`⟳ 자동 업데이트: ${saved.length}일 반영${IWCloud.isEditor() ? ' · 폰에도 반영' : ''}`, 6000); }
+      else if (issues.length && !opts.report) toast(`⟳ 자동 업데이트: 확인할 것 ${issues.length}개 — 저장하지 않았어요`, 6000);
+      if (opts.report) showReport({ saved, skipped: unchanged, saved_: saved });
+      else { renderPill(); if (['home', 'input', 'report', 'calendar'].includes(S.view)) render(); }
+    } finally { S.sync.running = false; }
+  }
+  function syncBanner() {
+    if (S.source === 'cloud' || !Object.values(S.srcHandles).some(Boolean)) return '';
+    if (S.sync.needPerm.length) return `<div class="warnbox" style="margin-bottom:14px;border:2px solid var(--warn)"><b>자동 업데이트가 멈춰 있어요</b> · 크롬을 다시 열어서 파일 접근 허용이 필요해요: ${S.sync.needPerm.map(esc).join(', ')}
+      <div style="margin-top:8px"><button class="btn primary sm" id="syncResume">자동 업데이트 다시 켜기</button> <span class="muted small">허용 창에서 "방문할 때마다 허용"을 고르면 다음부터 안 물어봐요</span></div></div>`;
+    if (S.sync.issues.length) return `<div class="badbox" style="margin-bottom:14px"><b>자동 업데이트에서 확인할 것 ${S.sync.issues.length}개</b> (이 파일들은 저장하지 않았어요)<ul style="margin:6px 0 0;padding-left:18px">${S.sync.issues.slice(0, 5).map(i => `<li><b>${esc(i.path.split('/').pop())}</b>: ${esc(i.msg)}</li>`).join('')}</ul>${S.view !== 'input' ? `<div style="margin-top:8px"><button class="btn sm" id="syncGoInput">데이터 입력에서 보기</button></div>` : ''}</div>`;
+    return '';
+  }
+  function syncLine() {
+    if (S.source === 'cloud' || !Object.values(S.srcHandles).some(Boolean)) return '';
+    if (!syncOn()) return `<div class="muted" style="margin-top:6px">⟳ 자동 업데이트 꺼짐</div>`;
+    const t = d => new Date(d).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    return `<div style="margin-top:6px">⟳ 자동 업데이트 켜짐${S.sync.last ? `<br><span class="muted">확인 ${t(S.sync.last)}${S.sync.lastSaved ? ` · 반영 ${t(S.sync.lastSaved.at)} (${S.sync.lastSaved.n}일)` : ''}</span>` : ''}</div>`;
+  }
+  async function resumeSync() {
+    for (const h of Object.values(S.srcHandles)) { if (!h) continue; try { if ((await h.queryPermission({ mode: 'read' })) !== 'granted') await h.requestPermission({ mode: 'read' }); } catch (e) { } }
+    if (IWStore.pending) { try { await IWStore.connect(false); S.nasError = null; await reload(); } catch (e) { return showFsError(e, null, '저장 폴더 다시 연결 실패'); } }
+    S.sync.needPerm = []; await autoSyncOnce({ force: true, report: true });
   }
 
   function progressOpen(title, sub) {
@@ -1652,11 +1993,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="grid g2">
       <div class="card"><h3>NAS 폴더에서 불러오기 <small>RECOMMENDED</small></h3>
         <p class="muted small" style="margin-top:0">권역별 DB 폴더를 한 번 연결해두면, 버튼 하나로 <b>새로 생기거나 수정된 파일만</b> 골라서 가져와요.</p>
-        ${Object.entries(REGIONS).map(([r, v]) => `<div class="row" style="margin:8px 0"><span class="tag ${r}" style="min-width:70px;justify-content:center">${v.label}</span>
-          <span class="small muted" style="flex:1" id="srcname-${r}">${S.srcHandles[r] ? esc(S.srcHandles[r].name) + ' 폴더' : '연결 안 됨'}</span>
-          ${r === 'kr' ? `<span class="tag">주간 통합 엑셀</span>` : r === 'jp' ? `<span class="tag">DB 제작 전</span>` : ''}
-          <button class="btn sm" data-src="${r}">${S.srcHandles[r] ? '다시 선택' : '폴더 연결'}</button>
-          ${S.srcHandles[r] ? `<button class="btn sm primary" data-scan="${r}">불러오기</button>` : ''}</div>`).join('')}
+        ${Object.entries(REGIONS).map(([r, v]) => { const h = S.srcHandles[r]; const isFile = r === 'kr'; return `<div class="row" style="margin:8px 0"><span class="tag ${r}" style="min-width:70px;justify-content:center">${v.label}</span>
+          <span class="small" style="flex:1">${h ? `<b>${esc(h.name)}</b> <span class="muted">${h.kind === 'file' ? '파일' : '폴더'} 연결됨</span>` : `<span class="muted">${r === 'jp' ? 'DB 제작 전' : isFile ? '주간 통합 엑셀(국내+영미 시트, 팀장님 정리본) 파일을 연결하세요 — 이 파일 하나로 국내·영어권이 같이 들어가요' : 'Daily DB 폴더(★영어권 › DB)를 연결하세요'}</span>`}</span>
+          ${r === 'jp' ? '' : `<button class="btn sm ${h ? '' : 'primary'}" data-src="${r}">${h ? '바꾸기' : isFile ? '파일 연결' : '폴더 연결'}</button>`}</div>`; }).join('')}
+        <label class="small row" style="margin-top:10px"><input type="checkbox" id="autoSync" ${syncOn() ? 'checked' : ''}> <b>자동 업데이트</b> — 앱이 열려 있는 동안 2분마다 확인해서, 바뀐 파일만 읽고 저장·폰 반영까지 자동으로 해요</label>
+        <div class="row" style="margin-top:8px"><button class="btn sm" id="syncNow" ${Object.values(S.srcHandles).some(Boolean) ? '' : 'disabled'}>지금 확인</button><span class="small muted">${syncLine().replace(/<[^>]+>/g, ' ')}</span></div>
         <label class="small row" style="margin-top:10px"><input type="checkbox" id="rescanAll" ${S.rescanAll ? 'checked' : ''}> 변경 없는 파일도 전부 다시 분석 (부위 규칙을 바꾼 뒤에 사용)</label>
         ${IWStore.fsSupported() ? '' : `<div class="warnbox" style="margin-top:10px">이 브라우저는 폴더 연결을 지원하지 않아요. 크롬 또는 엣지에서 열어주세요. 오른쪽 드래그 방식은 사용할 수 있어요.</div>`}
       </div>
@@ -1665,7 +2006,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <p><b>영어권</b>: Daily DB 월별 폴더(예: 26.10)째 넣기<br><b>국내권</b>: 홍보팀 주간 통합 엑셀(예: (국내) 10월 2주차 시트가 있는 파일) 넣기 · 자동 인식</p>
         <div class="row" style="justify-content:center;margin-bottom:12px"><span class="small">경로로 권역을 모를 때 적용할 권역</span><select id="dropRegion">${Object.entries(REGIONS).map(([k, v]) => `<option value="${k}" ${S.dropRegion === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
         <div class="row" style="justify-content:center"><button class="btn" id="pickDir">폴더 선택</button><button class="btn" id="pickFile">파일 선택</button></div>
-        <input type="file" id="dirInput" webkitdirectory multiple class="hide"><input type="file" id="fileInput" multiple accept=".xlsx,.xls,.xlsm" class="hide">
+        <input type="file" id="dirInput" webkitdirectory multiple class="hide"><input type="file" id="fileInput" multiple accept=".xlsx,.xls,.xlsm,.xlsb" class="hide">
       </div>
     </div>
     <div class="card" style="margin-top:16px">
@@ -1737,9 +2078,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     $('#dropRegion').onchange = e => { S.dropRegion = e.target.value; };
     $('#rescanAll').onchange = e => { S.rescanAll = e.target.checked; };
     document.querySelectorAll('[data-src]').forEach(b => b.onclick = async () => {
-      try { const h = await window.showDirectoryPicker({ id: 'iw-src-' + b.dataset.src, mode: 'read' }); S.srcHandles[b.dataset.src] = h; await IWStore.setSource(b.dataset.src, h); render(); toast(`${REGIONS[b.dataset.src].label} 폴더 연결: ${h.name}`); }
-      catch (e) { showFsError(e, 'read', 'DB 폴더 연결 실패'); }
+      const r = b.dataset.src;
+      try {
+        let h;
+        if (r === 'kr') [h] = await window.showOpenFilePicker({ id: 'iw-src-kr', multiple: false, types: [{ description: '엑셀', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'], 'application/vnd.ms-excel': ['.xls', '.xlsb'] } }] });
+        else h = await window.showDirectoryPicker({ id: 'iw-src-' + r, mode: 'read' });
+        S.srcHandles[r] = h; await IWStore.setSource(r, h);
+        toast(`${REGIONS[r].label} 연결: ${h.name} — 바로 확인할게요`);
+        await autoSyncOnce({ force: true, report: true });
+      } catch (e) { showFsError(e, 'read', `${REGIONS[r].label} 연결 실패`); }
     });
+    $('#autoSync').onchange = e => { localSet('autosync', e.target.checked ? '1' : '0'); renderPill(); if (e.target.checked) autoSyncOnce(); };
+    $('#syncNow').onclick = () => autoSyncOnce({ force: true, report: true });
     document.querySelectorAll('[data-scan]').forEach(b => b.onclick = async () => {
       const r = b.dataset.scan, h = S.srcHandles[r];
       try {
@@ -1791,7 +2141,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     catch (e) { x.status = 'error'; x.error = (/password|encrypt/i.test(e.message) || sig === 'ole') ? '암호화된 파일이에요 (문서 보안 프로그램/DRM 또는 암호). 브라우저에서는 열 수 없어요' : `엑셀로 읽지 못했어요 (${sig}): ${e.message}`; return; }
     if (sig !== 'xlsx' && sig !== 'ole' && wb.SheetNames.length <= 1) { x.status = 'error'; x.error = sig === 'drm' ? '문서 보안 프로그램(DRM)으로 잠긴 파일이에요. 브라우저에서는 내용을 읽을 수 없어요' : `엑셀 파일이 아니에요 (파일 종류: ${sig})`; return; }
     if (IW.isWeeklyWorkbook(wb)) { analyzeWeekly(x, wb, lines); return; }
-    if (!x.date) { x.status = 'error'; x.error = (x.dateWarn && x.dateWarn[0]) || '날짜를 알 수 없어요 (파일명이 Daily DB_월.일 형식인지 확인)'; return; }
+    // 문의 DB 형식인지 먼저 확인 (주간 통합 시트도, 인쇄/채널 시트도 없으면 다른 종류의 파일)
+    const probe = IW.parseEnglishWorkbook(XLSX, wb, S.settings);
+    if (probe.errors && probe.errors.length) {
+      const sn = wb.SheetNames.slice(0, 8).join(', ') + (wb.SheetNames.length > 8 ? ' …' : '');
+      const surg = wb.SheetNames.some(n => /원장|수술|일별통계/.test(n));
+      x.status = 'error';
+      x.error = `문의 DB 형식이 아니에요${surg ? ' (수술 부위 통계 파일로 보여요)' : ''}. 국내는 "(국내) ○월 ○주차" 시트가 있는 주간 통합 파일, 영어권은 Daily DB 파일을 넣어주세요 · 이 파일의 시트: ${sn}`;
+      return;
+    }
+    // Daily DB(인쇄 시트) 형식은 영어권 전용 → 권역을 추측으로 정했으면 영어권으로 바로잡기
+    if (x.regionGuess && x.region !== 'en') { x.region = 'en'; x.dateWarn = (x.dateWarn || []).concat(['Daily DB 형식이라 영어권으로 처리함']); }
+    if (!x.date) { x.status = 'error'; x.error = '파일 이름에서 날짜를 못 찾았어요 (Daily DB_월.일 형식인지 확인)'; return; }
     if (!x.region) { x.status = 'error'; x.error = '권역을 선택하세요'; return; }
     if (x.region !== 'en') { x.status = 'error'; x.error = `${REGIONS[x.region].label}은 Daily DB가 아니라 홍보팀 주간 통합 엑셀로 넣어주세요`; return; }
     const parsed = IW.parseEnglishWorkbook(XLSX, wb, S.settings);
@@ -1799,22 +2160,37 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const rec = IW.buildRecord(parsed, { date: x.date, region: x.region, warnings: x.dateWarn, source: { path: x.path, name: x.file.name, lastModified: x.file.lastModified, size: x.file.size } }, S.settings);
     if (IW.dow(x.date) === 0) { rec.warnings.unshift(rec.empty ? '일요일 휴진 파일' : '일요일인데 데이터가 있음: 파일명 날짜를 확인하세요'); x.include = false; }
     if (rec.empty) { x.include = false; rec.warnings.unshift('문의 0건 (아직 미입력이면 저장 안 함 · 실제 0건이면 체크해서 저장)'); }
+    const wk = S.records[rec.key];
+    if (wk && wk.parser === 'weekly-v1' && !wk.empty) {
+      const df = dailyDiff(rec, wk);
+      rec.warnings.unshift(`주간 통합 파일(팀장 정리본) 기록이 있어 그 숫자를 유지하고 이 파일은 저장 안 함${df ? ` · 숫자가 다름: ${df}` : ' · 숫자 일치'}`);
+      x.include = false; x.weeklyKept = true;
+    }
     x.record = rec; x.status = 'done';
     parsed.inquiries.slice(0, 2).forEach(q => lines.push({ d: x.date, ch: q.channel, nm: IW.maskName(q.name), ct: q.contact ? IW.maskContact(q.contact) : '', pt: q.part }));
+  }
+  // 영어권 Daily DB와 주간 통합 파일 숫자 비교 (다르면 짧은 설명, 같으면 '')
+  function dailyDiff(daily, weekly) {
+    const out = [];
+    if (daily.total !== weekly.total) out.push(`문의 Daily ${daily.total} / 주간 ${weekly.total}`);
+    const ks = new Set([...Object.keys(daily.channels || {}), ...Object.keys(weekly.channels || {})]);
+    for (const k of ks) { const a = (daily.channels || {})[k] || 0, b = (weekly.channels || {})[k] || 0; if (a !== b) out.push(`${k} ${a}/${b}`); }
+    return out.slice(0, 4).join(', ');
   }
   function analyzeWeekly(x, wb, lines) {
     const ym = x.file.name.match(/20(\d{2})/) || x.path.match(/20(\d{2})/);
     const year = ym ? 2000 + +ym[1] : new Date().getFullYear();
     const res = IW.parseWeeklyWorkbook(XLSX, wb, S.settings, year);
     const recs = [], notes = [`주간 통합 DB로 인식 · 연도 ${year}년${ym ? '' : ' (파일명에 연도가 없어 올해로 가정 — 맞는지 확인해주세요)'}`];
-    const built = {}; let keptDaily = 0, empty = 0;
+    const built = {}; let keptDaily = 0, empty = 0, replacedDaily = 0; const diffDaily = [];
     for (const d of res.days) {
       const rec = IW.buildRecord({ inquiries: d.inquiries, warnings: d.warnings }, { date: d.date, region: d.region, parser: 'weekly-v1', source: { path: x.path, name: x.file.name, sheet: d.sheet, lastModified: x.file.lastModified, size: x.file.size } }, S.settings);
       rec.warnings = rec.warnings.map(w => w.replace('분류 안 된 부위:', '기타부위로 센 단어:'));
       built[rec.key] = rec;
       if (IW.dow(d.date) === 0) { if (!rec.empty) notes.push(`${d.date}(일) 칸에 데이터가 있어요 — 휴진일이라 저장 안 함, 날짜를 확인해주세요`); continue; }
-      if (d.region === 'en' && S.records[`${d.date}|en`] && S.records[`${d.date}|en`].parser !== 'weekly-v1') { keptDaily++; continue; }
-      if (rec.empty) { empty++; continue; }
+      const daily = S.records[rec.key] && S.records[rec.key].parser !== 'weekly-v1' ? S.records[rec.key] : null;
+      if (rec.empty) { if (daily) keptDaily++; else empty++; continue; }   // 주간 파일에 아직 안 옮긴 날은 Daily DB 기록을 그대로 둠
+      if (daily) { replacedDaily++; const df = dailyDiff(daily, rec); if (df) { diffDaily.push(`${d.date.slice(5)} (${df})`); rec.warnings.unshift(`NAS Daily DB와 숫자가 다름: ${df} → 주간 통합 파일(팀장 정리본) 기준으로 저장`); } }
       recs.push(rec);
       d.inquiries.slice(0, 2).forEach(q => lines.push({ d: d.date, ch: q.channel, nm: q.resv ? '예약' : '', ct: q.cost ? '비용' : '', pt: q.part }));
     }
@@ -1826,15 +2202,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     }
     if (x.deletes.length) notes.push(`예전에 저장됐지만 지금 파일에서 비어 있는 ${x.deletes.length}일은 삭제해요: ${x.deletes.map(k => k.split('|')[0].slice(5)).join(', ')}`);
     // 시트마다 홍보팀 요약표와 칸 단위 대조
-    const chk = { sheets: 0, ok: 0, cells: 0, bad: [], noTable: [] };
+    const chk = { sheets: 0, ok: 0, cells: 0, bad: [], soft: [], noTable: [] };
     for (const sh of res.sheets) {
       const c = IW.crossCheckSheet(sh, sh.dates.map(d => built[`${d}|${sh.region}`]).filter(Boolean));
       if (!c.hasTable) { chk.noTable.push(sh.name); continue; }
       chk.sheets++; chk.cells += c.cells;
+      if (c.soft.length) chk.soft.push(c);
       if (c.diffs.length) chk.bad.push(c); else chk.ok++;
     }
     x.check = chk;
-    if (keptDaily) notes.push(`영어권 ${keptDaily}일은 이미 Daily DB 기록이 있어서 그대로 두고 건너뜀`);
+    if (replacedDaily) notes.push(`영어권 ${replacedDaily}일은 Daily DB 기록 대신 주간 통합 파일 숫자로 저장 (영어권 공식 기준 = 주간 통합 파일)`);
+    if (diffDaily.length) notes.push(`⚠ Daily DB와 숫자가 다른 날 ${diffDaily.length}일: ${diffDaily.join(', ')}`);
+    if (keptDaily) notes.push(`영어권 ${keptDaily}일은 주간 파일에 아직 비어 있어 Daily DB 기록을 그대로 둠`);
     if (empty) notes.push(`아직 입력되지 않은 빈 날 ${empty}일은 저장하지 않음`);
     x.kind = 'weekly'; x.records = recs; x.notes = notes.concat(res.warnings); x.status = (recs.length || x.deletes.length) ? 'done' : 'error';
     if (!recs.length && !x.deletes.length) x.error = '저장할 날짜가 없어요';
@@ -1845,7 +2224,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const head = c.bad.length
       ? `<span class="tag bad">홍보팀 표와 다른 칸 있음</span> ${c.ok}/${c.sheets}주 일치`
       : `<span class="tag ok">홍보팀 표와 일치</span> ${c.sheets}주 · ${c.cells}칸`;
-    return `<div style="margin-top:6px">${head}${c.bad.length ? `<details style="margin-top:4px"><summary>다른 칸 보기</summary><ul>${c.bad.map(b => `<li><b>${esc(b.sheet)}</b>: ${b.diffs.map(esc).join(' · ')}</li>`).join('')}</ul><div class="muted small">홍보팀 엑셀의 수식이 틀렸을 수도, 앱 계산이 틀렸을 수도 있어요. 저장 전에 원본 칸을 확인해주세요.</div></details>` : ''}${c.noTable.length ? `<div class="muted small">요약표가 없는 시트 ${c.noTable.length}개는 대조 못 함</div>` : ''}</div>`;
+    return `<div style="margin-top:6px">${head}${c.bad.length ? `<details style="margin-top:4px"><summary>다른 칸 보기</summary><ul>${c.bad.map(b => `<li><b>${esc(b.sheet)}</b>: ${b.diffs.map(esc).join(' · ')}</li>`).join('')}</ul><div class="muted small">홍보팀 엑셀의 수식이 틀렸을 수도, 앱 계산이 틀렸을 수도 있어요. 저장 전에 원본 칸을 확인해주세요.</div></details>` : ''}${(c.soft || []).length ? `<details style="margin-top:4px"><summary>참고: 홍보팀 '예약중복' 보조 칸이 다른 주 ${c.soft.length}개 (저장에는 영향 없음)</summary><ul>${c.soft.map(b => `<li><b>${esc(b.sheet)}</b>: ${b.soft.map(esc).join(' · ')}</li>`).join('')}</ul><div class="muted small">문의·예약·부위 숫자는 모두 일치해요. 이 칸은 홍보팀 엑셀의 수식이 다른 열을 가리키는 경우에 주로 달라져요. 그 시트의 예약중복 수식을 확인해주세요.</div></details>` : ''}${c.noTable.length ? `<div class="muted small">요약표가 없는 시트 ${c.noTable.length}개는 대조 못 함</div>` : ''}</div>`;
   }
   async function saveQueue(opts = {}) {
     const sel = S.queue.filter(x => x.status === 'done' && x.include);
@@ -1858,8 +2237,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const byKey = new Map();
     for (const r of sel.flatMap(x => x.records || [x.record])) {
       const ex = byKey.get(r.key);
-      // 같은 날짜·권역이 Daily DB와 주간 엑셀에 둘 다 있으면 Daily DB(원본)를 우선
-      if (ex && ex.parser !== 'weekly-v1' && r.parser === 'weekly-v1') continue;
+      // 같은 날짜·권역이 Daily DB와 주간 엑셀에 둘 다 있으면 주간 통합 파일(팀장 정리본, 요약표 대조 완료)을 우선
+      if (ex && ex.parser === 'weekly-v1' && r.parser !== 'weekly-v1') continue;
+      if (r.parser !== 'weekly-v1' && S.records[r.key] && S.records[r.key].parser === 'weekly-v1' && !S.records[r.key].empty) continue;
       byKey.set(r.key, r);
     }
     const recs = [...byKey.values()].map(r => Object.assign({}, r, { savedAt: now, savedAsZero: r.empty ? true : undefined }));
@@ -1870,7 +2250,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       for (const k of delKeys) { await IWStore.deleteRecord(S.records[k]); }
       if (delKeys.length) queuePush(delKeys.map(k => S.records[k]), delKeys, `빈 날 ${delKeys.length}일 삭제`);
       S.queue = S.queue.filter(x => !sel.includes(x));
-      const last = recs.map(r => r.date).sort().pop(); if (last) { S.anchor = last; S.rptAnchor = last; S.calMonth = last.slice(0, 7); }
+      const last = recs.map(r => r.date).sort().pop(); if (last && !opts.keepView) { S.anchor = last; S.rptAnchor = last; S.calMonth = last.slice(0, 7); }
       queuePush(recs);
       await reload();
       const pr = await pushPending();
@@ -1886,13 +2266,17 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     setAccent(S.rptRegion);
     const st = S.settings, p = IW.periodFor(S.rptType, S.rptAnchor, st), pp = IW.shiftPeriod(p, -1, st);
     const cur = IW.aggregate(S.records, S.rptRegion, p.start, p.end), cmp = fairPrev(S.rptRegion, p, pp, cur), prev = cmp.prev;
+    // 예약·비용 칸을 한 번도 쓰지 않은 권역(지금 영어권)은 보고서·카톡 요약에서도 '0건/0%' 대신 숨김
+    const uses = usedFields(S.rptRegion);
+    if (!uses.resv) { cur.resvDays = 0; prev.resvDays = 0; }
+    if (!uses.cost) { cur.notesDays = 0; prev.notesDays = 0; }
     const baseCh = S.rptRegion === 'all' ? [...new Set(Object.values(st.channels).flat())] : (st.channels[S.rptRegion] || []);
     const chCols = baseCh.concat(Object.keys(cur.channels).filter(c => !baseCh.includes(c) && cur.channels[c]));
     const ptCols = st.categories.concat(Object.keys(cur.parts).filter(c => !st.categories.includes(c) && c !== '부위미상'));
     const title = `${p.label} ${S.rptRegion === 'all' ? '' : REGIONS[S.rptRegion].label + ' '}`;
     const hasR = cur.resvDays > 0;
     const chT = `<table class="rep"><caption>${esc(title)}문의 현황</caption><tr>${hasR ? '<th></th>' : ''}${chCols.map(c => `<th>${esc(c)}</th>`).join('')}<th class="total">총합</th><th>상담날짜문의</th><th>비용문의</th></tr>
-      <tr>${hasR ? '<th>문의</th>' : ''}${chCols.map(c => `<td>${cur.channels[c] || 0}건</td>`).join('')}<td class="total">${cur.total}건</td>${cur.notesDays ? `<td>${cur.dateAsk}건</td><td>${cur.cost}건</td>` : '<td class="na">원본에 없음</td><td class="na">원본에 없음</td>'}</tr>
+      <tr>${hasR ? '<th>문의</th>' : ''}${chCols.map(c => `<td>${cur.channels[c] || 0}건</td>`).join('')}<td class="total">${cur.total}건</td>${cur.notesDays ? `<td>${cur.dateAsk}건</td><td>${cur.cost}건</td>` : '<td class="na">기록 없음</td><td class="na">기록 없음</td>'}</tr>
       ${hasR ? `<tr><th>예약</th>${chCols.map(c => `<td>${cur.resvCh[c] || 0}건</td>`).join('')}<td class="total">${cur.resv}건</td><td></td><td></td></tr>
       <tr><th>전환율</th>${chCols.map(c => `<td>${cur.chBase[c] ? rate(cur.resvCh[c] || 0, cur.chBase[c]) + '%' : '–'}</td>`).join('')}<td class="total">${rate(cur.resv, cur.resvBase)}%</td><td></td><td></td></tr>` : ''}</table>`;
     const ptT = `<table class="rep"><caption>${esc(title)}부위별 문의 현황</caption><tr>${hasR ? '<th></th>' : ''}${ptCols.map(c => `<th>${esc(c)}</th>`).join('')}<th>부위미상</th><th title="부위를 2개 이상 적은 문의에서 추가로 센 수. 부위 합계 − 이 수 = 문의 수">부위 추가분</th><th style="color:var(--bad)">연락처 중복</th></tr>
@@ -1911,7 +2295,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="card"><h3>홍보팀 양식 <small>FORMAT</small><span class="right row noprint"><button class="btn sm" id="cpTsv">엑셀용 복사</button><button class="btn sm" id="cpKakao">카톡 요약 복사</button><button class="btn sm" id="prt">인쇄 / PDF</button></span></h3>
       <div class="muted small" style="margin-bottom:10px">${p.start} ~ ${p.end} · 저장된 ${cur.days}일 기준${cur.days ? '' : ' (데이터 없음)'}${cmp.partial ? ` · <b style="color:var(--warn)">진행 중</b> (${esc(cmp.note)})` : ''}</div>
       <div class="tablewrap">${chT}</div><div style="height:16px"></div><div class="tablewrap">${ptT}</div>
-      <div class="warnbox" style="margin-top:14px"><b>읽는 법</b> · 부위는 한 문의에 여러 개면 각각 세서 합계가 총합보다 클 수 있어요. · <b>상담날짜문의·비용문의·예약</b>은 홍보팀 주간 통합 엑셀에서 읽어요. 영어권 Daily DB에는 이 칸이 없어 "원본에 없음"으로 나와요. · <b>전환율</b> = 예약 ÷ 문의 (같은 주에 들어온 문의 기준), 소수점 첫째 자리 · 변화는 %p로 표시. · <b>부위 추가분</b>은 홍보팀 표의 "예약중복"과 같은 값이에요(부위 합계 − 추가분 = 문의 수). · <b>연락처 중복</b>은 같은 날 같은 파일 안에서만 찾아요(개인정보를 저장하지 않기 때문).</div>
+      <div class="warnbox" style="margin-top:14px"><b>읽는 법</b> · 부위는 한 문의에 여러 개면 각각 세서 합계가 총합보다 클 수 있어요. · <b>상담날짜문의·비용문의·예약</b>은 홍보팀 주간 통합 엑셀에서 읽어요. 이 칸을 한 번도 쓰지 않은 권역(지금 영어권)은 0건·0%로 오해하지 않게 "기록 없음"으로 두고 예약·전환율 줄을 숨겨요. · <b>전환율</b> = 예약 ÷ 문의 (같은 주에 들어온 문의 기준), 소수점 첫째 자리 · 변화는 %p로 표시. · <b>부위 추가분</b>은 홍보팀 표의 "예약중복"에 해당해요(부위 합계 − 추가분 = 문의 수). 부위1을 비우고 부위2에 적은 줄은 홍보팀 수식만 1 더 세서 가끔 1~2 차이가 날 수 있어요. · <b>연락처 중복</b>은 같은 날 같은 파일 안에서만 찾아요(개인정보를 저장하지 않기 때문).</div>
     </div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>핵심 요약 <small>KEY POINTS</small></h3>
@@ -2146,6 +2530,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     if (window.matchMedia('(max-width:760px)').matches && (S.view === 'input' || S.view === 'data')) { S.view = 'home'; document.querySelectorAll('.navbtn').forEach(x => x.classList.toggle('on', x.dataset.view === 'home')); }
     const v = { home: renderHome, input: renderInput, report: renderReport, calendar: renderCalendar, data: renderData, settings: renderSettings }[S.view];
     try { v(); } catch (e) { console.error(e); $('#main').innerHTML = `<div class="badbox">화면 오류: ${esc(e.message)}</div>`; }
+    const sb = syncBanner(); if (sb && !(IWCloud.enabled() && !IWCloud.signedIn() && !S.skipLogin)) {
+      $('#main').insertAdjacentHTML('afterbegin', sb);
+      const rs = $('#syncResume'); if (rs) rs.onclick = () => resumeSync();
+      const gi = $('#syncGoInput'); if (gi) gi.onclick = () => go('input');
+    }
     const bn = blockedBanner(); if (bn) {
       $('#main').insertAdjacentHTML('afterbegin', bn);
       const dc = $('#diagCopyTop'); if (dc) dc.onclick = async () => copy(await diagText(), '진단 결과를 복사했어요');
@@ -2166,18 +2555,22 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => { }); });
       setInterval(() => reg.update().catch(() => { }), 30 * 60000);
     }).catch(e => console.warn('sw', e));
-    let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded) return; reloaded = true; location.reload(); });
+    let reloaded = false; const hadController = !!navigator.serviceWorker.controller;
+    // 처음 설치될 때는 새로고침하지 않고, 사용자가 "업데이트"를 눌렀을 때만 새로고침
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || !hadController) return; reloaded = true; location.reload(); });
   }
   (async function boot() {
     applyTheme();
     await IWStore.init();
     await IWCloud.init();
     if (IWCloud.justSignedIn) { IWCloud.justSignedIn = false; await afterLogin(IWCloud.role); }
+    setInterval(() => autoSyncOnce(), SYNC_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) autoSyncOnce(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDataUpdate(); });
     setInterval(checkDataUpdate, 5 * 60000);
     for (const r of Object.keys(REGIONS)) { const h = await IWStore.getSource(r); if (h) S.srcHandles[r] = h; }
     await reload();
+    setTimeout(() => autoSyncOnce(), 1500);
   })();
   window.__IW_STATE = S; window.__reload = reload;
 })();
