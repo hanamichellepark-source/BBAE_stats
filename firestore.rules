@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // members/{이메일} 문서가 있는 사람만 "등록된 사람"
+    function member() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/members/$(request.auth.token.email));
+    }
+    // role 필드가 editor 인 사람만 올리기(쓰기) 가능
+    function editor() {
+      return member()
+        && get(/databases/$(database)/documents/members/$(request.auth.token.email)).data.role == 'editor';
+    }
+    match /stats/{id}   { allow read: if member(); allow write: if editor(); }
+    match /config/{id}  { allow read: if member(); allow write: if editor(); }
+    // 자기 자신의 등록 정보만 읽을 수 있음. 목록 수정은 Firebase 화면에서만
+    match /members/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if false;
+    }
+  }
+}
