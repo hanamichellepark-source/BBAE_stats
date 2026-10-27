@@ -945,9 +945,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     },
     hasGoogle() { return !!(this.cfg && this.cfg.googleClientId); },
     redirectUri() { return location.origin + location.pathname.replace(/index\.html$/, ''); },
-    googleStart() {
+    // nonce = SHA-256(state) → 아이폰 홈 화면 앱처럼 로그인 중 저장공간이 바뀌어도(확인값 분실) 로그인 확인 가능
+    async sha(t) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join(''); },
+    async googleStart() {
       const rnd = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-      const st = { state: rnd(), nonce: rnd(), at: Date.now() };
+      const state = rnd(); const st = { state, nonce: await this.sha(state), at: Date.now() };
       ls.set('iw_google_pending', st);
       const q = new URLSearchParams({ client_id: this.cfg.googleClientId, redirect_uri: this.redirectUri(), response_type: 'id_token', scope: 'openid email', nonce: st.nonce, state: st.state, prompt: 'select_account' });
       location.href = (this.cfg.googleAuthUrl || 'https://accounts.google.com/o/oauth2/v2/auth') + '?' + q.toString();
@@ -959,10 +961,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       const st = ls.get('iw_google_pending'); ls.del('iw_google_pending');
       try {
         if (h.get('error')) throw cerr(h.get('error') === 'access_denied' ? '구글 로그인을 취소했어요' : '구글 로그인 실패: ' + h.get('error'), 'google');
-        if (!st || st.state !== h.get('state') || Date.now() - st.at > 10 * 60000) throw cerr('로그인 확인값이 맞지 않아요. 다시 시도해주세요', 'google');
-        const idt = h.get('id_token');
+        const idt = h.get('id_token'), state = h.get('state') || '';
         let payload = {}; try { payload = JSON.parse(decodeURIComponent(escape(atob(idt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { }
-        if (payload.nonce !== st.nonce) throw cerr('로그인 확인값이 맞지 않아요. 다시 시도해주세요', 'google');
+        if (st && st.state === state) { if (Date.now() - st.at > 15 * 60000 || payload.nonce !== st.nonce) throw cerr('로그인 확인값이 맞지 않아요. 다시 시도해주세요', 'google'); }
+        else {   // 저장해둔 확인값이 없어도(아이폰 홈 화면 앱 등) state로 nonce를 다시 계산해서 확인
+          const fresh = payload.iat && Math.abs(Date.now() / 1000 - payload.iat) < 15 * 60;
+          if (!state || !fresh || payload.nonce !== await this.sha(state)) throw cerr('로그인 확인값이 맞지 않아요. 다시 시도해주세요', 'google');
+        }
         let r, j;
         try { r = await fetch(`${this.authBase()}/accounts:signInWithIdp?key=${encodeURIComponent(this.cfg.apiKey)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(idt) + '&providerId=google.com', requestUri: this.redirectUri(), returnSecureToken: true, returnIdpCredential: true }) }); j = await r.json(); }
         catch (e) { throw cerr('인터넷 연결을 확인해주세요', 'network'); }
@@ -1024,7 +1029,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     async loadRole() {
       const d = await this.req('GET', `/members/${encodeURIComponent(this.s.email)}`);
       const role = d && d.fields && d.fields.role && d.fields.role.stringValue;
-      if (!role) throw cerr('등록되지 않은 계정이에요. 관리자가 Firebase의 members 목록에 이 이메일을 추가해야 해요', 'notmember');
+      if (!role) throw cerr(`등록되지 않은 계정이에요 (${this.s.email}). 관리자가 Firebase → Firestore → members 에 이 이메일을 그대로 문서 ID로 추가하고 role 을 viewer 로 넣어야 해요`, 'notmember');
       this.role = role === 'editor' ? 'editor' : 'viewer';
       this.s.role = this.role;
     },
@@ -1103,7 +1108,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 (function () {
   'use strict';
   const { REGIONS } = IW;
-  const APP_VERSION = '2610271404';
+  const APP_VERSION = '2610271455';
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayStr = () => IW.fmtDate(new Date());
@@ -1690,7 +1695,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </div></div>`;
     IWCloud.loginError = null;
     const err = m => { const b = $('#lgErr'); b.textContent = m; b.classList.remove('hide'); };
-    const gb = $('#lgGoogle'); if (gb) gb.onclick = () => { gb.disabled = true; gb.lastChild.textContent = ' 구글로 이동 중…'; IWCloud.googleStart(); };
+    const gb = $('#lgGoogle'); if (gb) gb.onclick = () => {
+      const ib = inAppBrowser();
+      if (ib) return inAppHelp(ib);   // 카톡·인스타 등 앱 안 브라우저는 구글이 로그인을 막음
+      gb.disabled = true; gb.lastChild.textContent = ' 구글로 이동 중…'; IWCloud.googleStart();
+    };
+    { const ib = inAppBrowser(); if (ib && g) { const b = document.createElement('div'); b.className = 'warnbox'; b.style.marginBottom = '12px'; b.innerHTML = `<b>${esc(ib.name)} 안에서 열렸어요</b> · 구글은 이 화면에서 로그인을 막아요. <button class="btn sm" id="lgExt" style="margin-top:6px">${ib.kakao ? '기본 브라우저로 열기' : '여는 방법 보기'}</button>`; gb.parentNode.insertBefore(b, gb); $('#lgExt').onclick = () => inAppHelp(ib); } }
     $('#loginForm').onsubmit = async e => {
       e.preventDefault(); const btn = $('#lgBtn'); btn.disabled = true; btn.textContent = '확인 중…';
       try { const role = await IWCloud.signIn($('#lgEmail').value, $('#lgPw').value); await afterLogin(role); }
@@ -1698,6 +1708,25 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     };
     $('#lgReset').onclick = async () => { const em = $('#lgEmail').value.trim(); if (!em) return err('이메일을 먼저 입력해주세요'); try { await IWCloud.resetPassword(em); toast('비밀번호 재설정 메일을 보냈어요', 5000); } catch (x) { err(x.message); } };
     const sk = $('#lgSkip'); if (sk) sk.onclick = () => { S.skipLogin = true; render(); };
+  }
+  // 카톡·인스타·네이버 등 앱 안의 브라우저 감지 (구글이 여기서는 로그인을 차단: 403 disallowed_useragent)
+  function inAppBrowser() {
+    const u = navigator.userAgent || '';
+    const list = [[/KAKAOTALK/i, '카카오톡', true], [/Instagram/i, '인스타그램'], [/FBAN|FBAV|FB_IAB/i, '페이스북'], [/Line\//i, '라인'], [/NAVER\(inapp|NAVER/i, '네이버 앱'], [/DaumApps/i, '다음 앱'], [/Whale\/.*Mobile.*inapp/i, '웨일 앱'], [/everytimeApp|BAND\//i, '앱'], [/; wv\)/i, '앱 안 브라우저']];
+    for (const [re, name, kakao] of list) if (re.test(u)) return { name, kakao: !!kakao, ios: /iPhone|iPad|iPod/i.test(u) };
+    return null;
+  }
+  function inAppHelp(ib) {
+    const url = location.origin + location.pathname;
+    if (ib.kakao) { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url); }
+    else if (!ib.ios) { location.href = `intent://${location.host}${location.pathname}#Intent;scheme=https;package=com.android.chrome;end`; }
+    modal(`<h3 style="margin:0 0 10px">${esc(ib.name)} 안에서는 구글 로그인이 안 돼요</h3>
+      <p style="line-height:1.7">구글이 보안 때문에 앱 안의 브라우저에서는 로그인을 막아요. <b>${ib.ios ? '사파리' : '크롬'}</b>에서 열어주세요.</p>
+      <ol style="line-height:1.8;padding-left:20px">${ib.ios ? `<li>오른쪽 아래(또는 위) <b>⋯ / 공유 버튼</b>을 누르세요</li><li><b>Safari로 열기</b> (또는 "기본 브라우저로 열기")를 누르세요</li><li>사파리에서 로그인한 뒤 <b>공유 → 홈 화면에 추가</b></li>` : `<li>오른쪽 위 <b>⋮</b> 를 누르세요</li><li><b>다른 브라우저로 열기 → Chrome</b>을 누르세요</li><li>크롬에서 로그인한 뒤 <b>⋮ → 홈 화면에 추가 (앱 설치)</b></li>`}</ol>
+      <div class="row" style="margin-top:10px"><input type="text" readonly value="${esc(url)}" style="flex:1" id="ibUrl"><button class="btn sm" id="ibCopy">주소 복사</button></div>
+      <div style="margin-top:14px;text-align:right"><button class="btn primary" id="ibOk">확인</button></div>`);
+    $('#ibCopy').onclick = async () => { try { await navigator.clipboard.writeText(url); toast('주소를 복사했어요. 사파리/크롬 주소창에 붙여넣으세요'); } catch (e) { $('#ibUrl').select(); } };
+    $('#ibOk').onclick = closeModal;
   }
   async function afterLogin(role) {
     toast(role === 'editor' ? `${IWCloud.email()} · 편집자로 로그인했어요. 저장하면 폰에도 자동 반영돼요` : `${IWCloud.email()} · 로그인했어요`, 4500);
