@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Insight Wave">
 <title>Insight Wave 통계앱</title>
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self' https://*.workers.dev https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://*.workers.dev https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; worker-src 'self'; manifest-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -114,7 +114,7 @@ main{padding:22px 28px 60px;min-width:0}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;padding:3px 8px;border-radius:5px;background:var(--chip);color:var(--ink2);white-space:nowrap}
 .tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.bad{background:var(--bad-soft);color:var(--bad)}.tag.ok{background:var(--ok-soft);color:var(--ok)}
 .tag.en{background:var(--en-soft);color:var(--en)}.tag.kr{background:var(--kr-soft);color:var(--kr)}.tag.jp{background:var(--jp-soft);color:var(--jp)}
-.weak{border-left:3px solid var(--warn);background:var(--card-solid);border-radius:12px}
+.weak{border-left:3px solid var(--warn);background:var(--card-solid);border-radius:12px}.weak.rise{border-left-color:var(--ok)}
 .weak .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .weak .head b{font-size:1.15rem}
 .weak ul,.weak ol{margin:8px 0 0;padding-left:20px;line-height:1.7;font-size:.92rem}
@@ -300,6 +300,27 @@ nav.side.hide + main{max-width:none}
 @media (prefers-reduced-motion:no-preference){.ld-mark img{animation:spGlow 1.6s ease-in-out infinite,ldBob 1.6s ease-in-out infinite}}
 @keyframes ldBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .progress i{background:linear-gradient(90deg,var(--brand-deep),var(--brand))}
+/* 월간 리포트 보기 */
+.repview{position:fixed;inset:0;z-index:90;background:rgba(10,8,10,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;padding:18px;opacity:0;transition:opacity .22s}
+.repview.show{opacity:1}
+.repview .rv-bar{display:flex;align-items:center;gap:12px;background:var(--card-solid);border-radius:14px 14px 0 0;padding:10px 14px;flex-wrap:wrap}.repview .rv-bar .btn{margin-left:auto}
+.repview iframe{flex:1;width:100%;border:0;background:#fff;border-radius:0 0 14px 14px}
+@media (max-width:760px){.repview{padding:0}.repview .rv-bar{border-radius:0;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}.repview iframe{border-radius:0}}
+.repcmp{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.repcmp span{font-size:.8rem;padding:4px 9px;border-radius:8px;font-variant-numeric:tabular-nums}.repcmp .ok{background:var(--ok-soft);color:var(--ok)}.repcmp .no{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.replist{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+/* 어디서 · 어떤 부위 */
+.mixgrid{gap:18px}.mx-h{font-weight:800;font-size:.86rem;margin-bottom:8px}
+ol.mixrank{list-style:none;margin:0;padding:0;display:grid;gap:7px;counter-reset:mr}
+ol.mixrank li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 8px;font-size:.84rem;counter-increment:mr}
+ol.mixrank li::before{content:counter(mr);width:18px;height:18px;border-radius:6px;display:grid;place-items:center;font-size:.7rem;font-weight:800;background:var(--accent-soft);color:var(--accent)}
+ol.mixrank li b{grid-column:2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ol.mixrank .mx-v{grid-column:3;grid-row:1;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}ol.mixrank .mx-v small{color:var(--muted);font-weight:500}
+ol.mixrank .mx-bar{grid-column:2/4;height:5px;border-radius:3px;background:var(--chip);overflow:hidden}ol.mixrank .mx-bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+ol.mixrank .mx-c{grid-column:2/4;font-size:.72rem;color:var(--muted)}
+ul.strat{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ul.strat li{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;line-height:1.6;background:var(--chip);border-radius:12px;padding:10px 12px}
+ul.strat .sk{flex:none;font-size:.72rem;font-weight:800;padding:2px 8px;border-radius:7px;background:var(--accent);color:#fff;margin-top:2px}
+@media (prefers-reduced-motion:no-preference){#main.anim ol.mixrank .mx-bar i{transform-origin:0 50%;animation:iwGrowX .6s .2s cubic-bezier(.2,.85,.25,1) both}#main.anim ul.strat li{animation:iwRise .35s cubic-bezier(.2,.75,.2,1) both;animation-delay:.3s}#main.anim.quick ul.strat li{animation:iwFade .2s both}}
 /* ---------- 모션 ---------- */
 @keyframes iwRise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes iwGrowY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
@@ -481,17 +502,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     channels: {
       en: ['왓츠앱', '플친', '인스타', '틱톡', '파인더패턴', '강남언니', '부키메디', '뷰티하퍼', '전화', '프리큐티'],
       kr: ['전화', '플친', '홈페이지', '바비톡', '강남언니'],
-      jp: []
+      jp: ['LINE', '강남언니', '인스타', '플친']
     },
     channelAliases: {
       '왓츠앱': ['왓츠앱', '왓츠', 'whatsapp', 'wa'],
+      'LINE': ['line', '공식line', '라인', '공식라인'],
       '인스타': ['인스타', '인스타그램', 'instagram', 'ig'],
       '틱톡': ['틱톡', 'tiktok'],
       '강남언니': ['강남언니', '강언'],
       '파인더패턴': ['파인더패턴'],
       '프리큐티': ['프리큐티', 'freequty'],
       '전화': ['전화', 'call', 'phone'],
-      '플친': ['플친', '플러스친구', '카톡', '카카오톡', 'kakao', 'kakaotalk'],
+      '플친': ['플친', '플러스친구', '카톡', '카카오톡', '카카오톡플친', '카톡플친', 'kakao', 'kakaotalk'],
       '홈페이지': ['홈페이지', '홈피'],
       '바비톡': ['바비톡'],
       '부키메디': ['부키메디'],
@@ -844,6 +866,154 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     return { days: Object.values(days).sort((a, b) => a.date < b.date ? -1 : 1), warnings, sheets, dupDates: dup };
   }
 
+  /* ---------- 국내 원본 DB: 플랫폼 명부(강남언니·바비톡·홈페이지) + 전화·플친 월별 DB ----------
+     두 파일 모두 A열에 날짜가 그날 첫 줄에만 있고, 아래 줄은 다음 날짜가 나올 때까지 같은 날 */
+  const PLATFORM_SHEETS = ['강남언니', '바비톡', '홈페이지'];
+  function rawRows(XLSX, ws, maxCol = 12) {
+    if (!ws || !ws['!ref']) return [];
+    const rg = XLSX.utils.decode_range(ws['!ref']); if (rg.e.c >= maxCol) rg.e.c = maxCol - 1; if (rg.e.r > 6000) rg.e.r = 6000;
+    return XLSX.utils.sheet_to_json(Object.assign({}, ws, { '!ref': XLSX.utils.encode_range(rg) }), { header: 1, raw: true, defval: '', blankrows: true });
+  }
+  // A열 한 칸 → {y?, m, d} (연도가 없으면 y 없음). 날짜가 아니면 null
+  function cellYmd(XLSX, v) {
+    if (typeof v === 'number' && v > 20000 && v < 80000) { const p = XLSX.SSF.parse_date_code(v); return p ? { y: p.y, m: p.m, d: p.d } : null; }
+    if (v instanceof Date && !isNaN(v)) return { y: v.getFullYear(), m: v.getMonth() + 1, d: v.getDate() };
+    const t = clean(v); if (!t) return null;
+    let m = t.match(/^(20\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/);
+    if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+    m = t.match(/^(\d{1,2})\s*월\s*(\d{1,2})\s*일?/);
+    if (m) return { m: +m[1], d: +m[2] };
+    return null;
+  }
+  // 위에서 아래로 시간 순서라는 점을 이용해 연도 없는 날짜의 연도를 채움 (12월 → 1월이면 다음 해)
+  function fillYears(list, today) {
+    if (!list.length) return;
+    let f = list.findIndex(x => x.y);
+    if (f < 0) { const L = list[list.length - 1], ty = +today.slice(0, 4); L.y = ymd(ty, L.m, L.d) > today ? ty - 1 : ty; f = list.length - 1; }
+    for (let i = f - 1; i >= 0; i--) { const nx = list[i + 1]; if (!list[i].y) list[i].y = list[i].m > nx.m + 6 ? nx.y - 1 : nx.y; }
+    for (let i = f + 1; i < list.length; i++) { const pv = list[i - 1]; if (!list[i].y) list[i].y = list[i].m < pv.m - 6 ? pv.y + 1 : pv.y; }
+  }
+  // 메모·희망부위 글에서 부위만 골라냄 (모르는 말은 버림 → 부위미상). 기타부위는 원래 단어를 남겨서 경고에 보이게
+  const PART_ABBR = { '복': '복부', '허': '허벅지', '허벅': '허벅지' };
+  function partCells(text, settings) {
+    let t = clean(text).replace(/^\s*\d{1,2}\s*[./]\s*\d{1,2}\s*/, '')                 // 앞의 날짜 (10.14)
+      .replace(/\d{2,3}(?:\.\d)?\s*\/\s*\d{2,3}(?:\.\d)?(?:\s*-\s*\d{1,3})?/g, ' ')        // 키/몸무게 (155/49-52)
+      .replace(/비용\s*안내.*$|비용\s*[ox○x].*$/i, ' ').replace(/남자|여자|와이프|남편|어머님|딸|재수술|\(재\)/g, ' ')
+      .replace(/\([^)]*\)/g, ' ').replace(/견\s*\+\s*브(?!라)/g, '견브');   // 견+브 = 홍보팀 표의 '견브'(상체). 견갑+브라라인은 따로 셈 (홍보팀과 같게)
+    const toks = t.split(/[+,，、/&·;|\s]+/).filter(Boolean).map(w => PART_ABBR[w] || w);
+    const cells = [], cats = new Set();
+    for (const p of splitParts(toks.join(' '), settings)) {
+      if (!p.cat) continue;
+      if (cats.has(p.cat) && p.cat !== '기타부위') continue;
+      cats.add(p.cat); cells.push(p.cat === '기타부위' ? p.raw : p.cat);
+    }
+    return cells;
+  }
+  const DATE_ASK = /상담\s*(날짜|일자|일정)\s*문의/;
+  function isPlatformWorkbook(wb) {
+    return wb.SheetNames.filter(n => PLATFORM_SHEETS.includes(n.trim())).length >= 2;
+  }
+  function isCallWorkbook(XLSX, wb) {
+    return wb.SheetNames.some(n => /^\d{2}\s*년\s*\d{1,2}\s*월$/.test(n.trim()) && rawRows(XLSX, wb.Sheets[n], 4).slice(0, 40).some(r => /^(전화|플친)\s*\d+$/.test(clean(r[1]))));
+  }
+  function isKrRawWorkbook(XLSX, wb) { return isPlatformWorkbook(wb) || isCallWorkbook(XLSX, wb); }
+  // 결과: { kind:'platform'|'call', days:{date:[문의]}, first, last, warnings }  · 이름·연락처는 담지 않음
+  function parseKrRaw(XLSX, wb, settings, opts = {}) {
+    const days = {}, warnings = []; let kind, first = null, last = null;
+    const today = opts.today || fmtDate(new Date());
+    const push = (date, q) => { (days[date] = days[date] || []).push(q); if (!first || date < first) first = date; if (!last || date > last) last = date; };
+    if (isPlatformWorkbook(wb)) {
+      kind = 'platform';
+      for (const sn of wb.SheetNames) {
+        if (!PLATFORM_SHEETS.includes(sn.trim())) continue;   // '인쇄' 등은 다른 시트의 복사라서 제외
+        const rows = rawRows(XLSX, wb.Sheets[sn], 10);
+        const ch = normChannel(sn.trim(), settings);
+        const marks = [];
+        rows.forEach((r, i) => { if (i < 1) return; const c = cellYmd(XLSX, r[0]); if (c && validDate(c.y || 2000, c.m, c.d) && !(c.m === 2 && c.d === 29 && !c.y)) marks.push(Object.assign(c, { i })); else if (clean(r[0]) && i > 1) warnings.push(`${sn} ${i + 1}행: A열 "${clean(r[0]).slice(0, 12)}"를 날짜로 못 읽음 (이 줄부터 앞 날짜로 셈)`); });
+        fillYears(marks, today);
+        marks.forEach((x, k) => { if (k && ymd(x.y, x.m, x.d) < ymd(marks[k - 1].y, marks[k - 1].m, marks[k - 1].d)) warnings.push(`${sn} ${x.i + 1}행: 날짜가 위 줄보다 앞서요 (${x.m}/${x.d}) — 순서를 확인해주세요`); });
+        for (let k = 0; k < marks.length; k++) {
+          const date = ymd(marks[k].y, marks[k].m, marks[k].d), end = k + 1 < marks.length ? marks[k + 1].i : rows.length;
+          if (date > today) { warnings.push(`${sn}: ${date}는 오늘보다 뒤라서 제외`); continue; }
+          for (let i = marks[k].i; i < end; i++) {
+            const r = rows[i]; if (!isReal(r[1]) && !isReal(r[2])) continue;
+            const notes = [3, 4, 5, 6, 7, 8].map(c => clean(r[c])).filter(Boolean);
+            const all = notes.join(' | ');
+            // 예약: 마지막으로 '예약+'/'취소'가 나온 메모 기준
+            let resv = false; for (const n of notes) { if (/예약\s*(\+|o\b|O\b|완료)/.test(n)) resv = true; if (/취소/.test(n)) resv = false; }
+            const costNote = notes.find(n => /비용\s*안내(?!\s*x)/i.test(n));
+            push(date, { channel: ch, cells: costNote ? partCells(costNote, settings) : [], resv, cost: !!costNote, note: DATE_ASK.test(all) ? '상담날짜문의' : '' });
+          }
+        }
+      }
+    } else if (isCallWorkbook(XLSX, wb)) {
+      kind = 'call';
+      const from = opts.from || '0000';
+      for (const sn of wb.SheetNames) {
+        const sm = sn.trim().match(/^(\d{2})\s*년\s*(\d{1,2})\s*월$/); if (!sm) continue;
+        const sy = 2000 + +sm[1], smo = +sm[2];
+        if (ymd(sy, smo, new Date(sy, smo, 0).getDate()) < from) continue;   // 필요한 기간보다 오래된 달은 안 읽음
+        const rows = rawRows(XLSX, wb.Sheets[sn], 6);
+        let date = null;
+        rows.forEach((r, i) => {
+          const c = cellYmd(XLSX, r[0]);
+          if (c) {
+            const y = c.y || (c.m < smo - 6 ? sy + 1 : c.m > smo + 6 ? sy - 1 : sy);
+            if (!validDate(y, c.m, c.d)) { warnings.push(`${sn} ${i + 1}행: 날짜 "${clean(r[0])}"가 올바르지 않음`); date = null; return; }
+            date = ymd(y, c.m, c.d);
+            if (c.m !== smo) warnings.push(`${sn} ${i + 1}행: ${c.m}/${c.d} 날짜가 ${smo}월 시트에 있어요`);
+          } else if (clean(r[0])) { warnings.push(`${sn} ${i + 1}행: A열 "${clean(r[0]).slice(0, 12)}"를 날짜로 못 읽음`); }
+          const bl = clean(r[1]); let lab = bl.match(/^(전화|플친|카톡)\s*\d*$/);
+          if (!lab && /^(전[화하]|[플필풀][친찬칭]|카톡)\s*\d*$/.test(bl)) { lab = [bl, bl[0] === '전' ? '전화' : '플친']; warnings.push(`${sn} ${i + 1}행: B열 "${bl}" → "${lab[1]}"로 셈 (오타로 보임)`); }
+          if (!lab) { if (bl && date) warnings.push(`${sn} ${i + 1}행: B열 "${bl.slice(0, 10)}" — 전화/플친이 아니라서 안 셈`); return; }
+          const st = clean(r[2]), pt = clean(r[3]);
+          if (!st && !pt) return;   // 번호만 미리 적어둔 빈 줄
+          if (!date) { warnings.push(`${sn} ${i + 1}행: 위에 날짜가 없어 안 셈`); return; }
+          if (date > today) return;
+          push(date, { channel: normChannel(lab[1], settings), cells: partCells(pt, settings), resv: /예약\s*[oO○0]/.test(st), cost: /비용\s*[oO○0]/.test(st), note: DATE_ASK.test(pt) ? '상담날짜문의' : '' });
+        });
+      }
+    } else return { errors: ['국내 원본 DB 형식이 아님'], warnings };
+    return { kind, days, first, last, warnings };
+  }
+
+  /* ---------- 일본어권 Daily DB: 하루 한 파일, 채널별 시트(LINE·강남언니·인스타·카톡…) ---------- */
+  function isJapanWorkbook(XLSX, wb) {
+    // LINE 시트가 있는 Daily DB (영어권 Daily DB와 헷갈리지 않게 LINE 시트로만 판단)
+    return !wb.SheetNames.some(n => norm(n).startsWith('인쇄')) && wb.SheetNames.some(n => /^(공식)?\s*line$/i.test(n.trim()) && jpHeader(rowsOf(XLSX, wb.Sheets[n], 12).slice(0, 5)));
+  }
+  function jpHeader(rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i] || [], ni = r.findIndex(v => norm(v) === '이름'), pi = r.findIndex(v => ['부위', '희망부위', '시술부위'].includes(norm(v)));
+      if (ni >= 0 && pi > ni) return { i, ni, pi, ci: r.findIndex(v => ['연락처', '번호', '아이디'].includes(norm(v))), label: ni > 0 ? clean(r[ni - 1]) : '' };
+    }
+    return null;
+  }
+  function parseJapanWorkbook(XLSX, wb, settings) {
+    const inquiries = [], warnings = [], errors = [], channelCounts = {}, inSheetDates = new Set(); farNote();
+    let sheets = 0;
+    for (const sn of wb.SheetNames) {
+      const rows = rowsOf(XLSX, wb.Sheets[sn], 12), h = jpHeader(rows.slice(0, 5));
+      if (!h) { if (rows.some(r => r.some(isReal))) warnings.push(`"${sn}" 시트: 이름|부위 머리글이 없어 건너뜀`); continue; }
+      sheets++;
+      const lab = h.label && !/^\d+$/.test(h.label) ? h.label : '';
+      let ch = normChannel(lab || sn.trim(), settings);
+      if (!ch || /^[-–—.]+$/.test(ch)) ch = normChannel(sn.trim(), settings);
+      if (!ch || /^[-–—.]+$/.test(ch)) ch = '기타경로';
+      channelCounts[ch] = channelCounts[ch] || 0;
+      for (let i = h.i + 1; i < rows.length; i++) {
+        const r = rows[i] || [], name = clean(r[h.ni]), part = clean(r[h.pi]), contact = h.ci >= 0 ? clean(r[h.ci]) : '';
+        if (!isReal(name) && !isReal(part) && !isReal(contact)) continue;
+        if (lab && h.ni > 0) { const cell = wb.Sheets[sn][XLSX.utils.encode_cell({ r: i, c: h.ni - 1 })]; const c = cell ? cellYmd(XLSX, cell.v) : null; if (c && c.y && validDate(c.y, c.m, c.d)) inSheetDates.add(ymd(c.y, c.m, c.d)); }
+        inquiries.push({ r: i + 1, channel: ch, name: isReal(name) ? name : '', part: isReal(part) ? part : '' });
+        channelCounts[ch]++;
+      }
+    }
+    if (!sheets) errors.push('이름|부위 머리글이 있는 시트가 없음 (일본어권 DB 형식이 아님)');
+    const fn = farNote(); if (fn) warnings.push(fn);
+    return { inquiries, channelCounts, inSheetDates: [...inSheetDates], warnings, errors };
+  }
+
   // 시트 하나에 대해 앱 계산과 홍보팀 요약표를 칸마다 비교
   function crossCheckSheet(sheet, recs) {
     const agg = { ch: {}, chR: {}, pt: {}, ptR: {}, total: 0, resv: 0, cost: 0, dateAsk: 0, extra: 0 };
@@ -975,7 +1145,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       for (const [k, v] of Object.entries(r.channels || {})) out.channels[k] = (out.channels[k] || 0) + v;
       for (const [k, v] of Object.entries(r.parts || {})) out.parts[k] = (out.parts[k] || 0) + v;
       for (const [ch, o] of Object.entries(r.matrix || {})) { out.matrix[ch] = out.matrix[ch] || {}; for (const [k, v] of Object.entries(o)) out.matrix[ch][k] = (out.matrix[ch][k] || 0) + v; }
-      if (r.hasResv) {   // 전환율 분모는 예약 정보가 있는 날의 문의만
+      if (r.hasResv && (!RESV.regions || RESV.regions.includes(r.region))) {   // 전환율 분모는 예약 정보가 있는 날의 문의만 · 예약 칸을 안 쓰는 권역(영어권 등)은 빼서 0%로 섞이지 않게
         out.resvDays++; out.resv += r.resv; out.resvBase += r.total;
         for (const [k, v] of Object.entries(r.resvCh || {})) out.resvCh[k] = (out.resvCh[k] || 0) + v;
         for (const [k, v] of Object.entries(r.resvPt || {})) out.resvPt[k] = (out.resvPt[k] || 0) + v;
@@ -989,28 +1159,58 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
 
   /* ---------- 떨어지는 부위 ---------- */
-  function weakParts(cur, prev, settings) {
-    const res = [];
+  /* 부위 움직임: 전체 문의 증감을 감안해서 '그 부위만' 크게 줄었는지/늘었는지 판단
+     기대치 = 이전 건수 × (이번 전체 ÷ 이전 전체). 기대치보다 20% 이상 적으면 하락, 20% 이상 많으면 상승 */
+  function partMoves(cur, prev, settings) {
+    const ex = settings.weakExclude || [], min = settings.weakMinCount || 5;
+    const tc = cur.total || 0, tp = prev.total || 0, ratio = tp ? tc / tp : 1;
+    const down = [], up = [];
     const cats = new Set([...Object.keys(cur.parts), ...Object.keys(prev.parts)]);
+    const chs = new Set([...Object.keys(cur.matrix), ...Object.keys(prev.matrix)]);
     for (const c of cats) {
-      if (settings.weakExclude.includes(c)) continue;
-      const a = cur.parts[c] || 0, b = prev.parts[c] || 0;
-      if (b < settings.weakMinCount) continue;
-      if (a >= b) continue;
-      const chDrops = [];
-      const chs = new Set([...Object.keys(cur.matrix), ...Object.keys(prev.matrix)]);
-      for (const ch of chs) {
-        const x = (cur.matrix[ch] || {})[c] || 0, y = (prev.matrix[ch] || {})[c] || 0;
-        if (y > x) chDrops.push({ ch, from: y, to: x });
-      }
-      chDrops.sort((p, q) => (q.from - q.to) - (p.from - p.to));
-      res.push({ cat: c, now: a, before: b, pct: Math.round((a - b) / b * 100), chDrops });
+      if (ex.includes(c)) continue;
+      const a = cur.parts[c] || 0, b = prev.parts[c] || 0, exp = b * ratio;
+      const moves = [...chs].map(ch => ({ ch, from: (prev.matrix[ch] || {})[c] || 0, to: (cur.matrix[ch] || {})[c] || 0 })).filter(m => m.from !== m.to);
+      const base = { cat: c, now: a, before: b, expected: Math.round(exp * 10) / 10, pct: b ? Math.round((a - b) / b * 100) : null, vsTrend: exp ? Math.round((a - exp) / exp * 100) : null,
+        shareNow: tc ? Math.round(a / tc * 1000) / 10 : 0, shareBefore: tp ? Math.round(b / tp * 1000) / 10 : 0 };
+      if (b >= min && a < b && b - a >= 2 && a < exp * 0.8) down.push(Object.assign(base, { small: b < 10, chDrops: moves.filter(m => m.from > m.to).sort((p, q) => (q.from - q.to) - (p.from - p.to)), chUps: moves.filter(m => m.to > m.from) }));
+      else if (Math.max(a, b) >= min && a > b && a - b >= 2 && (b === 0 || a > exp * 1.2)) up.push(Object.assign(base, { small: a < 10, chUps: moves.filter(m => m.to > m.from).sort((p, q) => (q.to - q.from) - (p.to - p.from)), chDrops: moves.filter(m => m.from > m.to) }));
     }
-    return res.sort((p, q) => p.pct - q.pct);
+    down.sort((p, q) => (p.vsTrend - q.vsTrend) || (q.before - p.before));
+    up.sort((p, q) => (q.now - q.expected) - (p.now - p.expected));
+    return { down, up, ratio, totalPct: tp ? Math.round((tc - tp) / tp * 100) : null };
   }
+  /* 어디서(채널) · 어떤 부위가 많았나: 순위, 조합, 커진/줄어든 조합, 채널 안에서 덜 나오는 부위(기회) */
+  function mixAnalysis(cur, prev, settings, cv) {   // cv = 예약을 기록하는 권역만 모은 집계 (영어권처럼 예약 칸을 안 쓰는 곳은 전환율에서 뺌)
+    const ex = settings.weakExclude || [];
+    const tc = cur.total || 0, tp = prev.total || 0, ratio = tp ? tc / tp : 1;
+    const pc = Object.entries(cur.parts).filter(([k]) => !ex.includes(k)).reduce((t, [, v]) => t + v, 0);
+    const chans = Object.entries(cur.channels).map(([ch, n]) => ({ ch, n, prev: prev.channels[ch] || 0, share: tc ? n / tc * 100 : 0,
+      conv: cv && cv.resvDays && (cv.chBase[ch] || 0) >= 10 ? (cv.resvCh[ch] || 0) / cv.chBase[ch] * 100 : null })).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+    const parts = Object.entries(cur.parts).filter(([k]) => !ex.includes(k)).map(([cat, n]) => ({ cat, n, prev: prev.parts[cat] || 0, share: pc ? n / pc * 100 : 0,
+      conv: cv && cv.resvDays && (cv.ptBase[cat] || 0) >= 10 ? (cv.resvPt[cat] || 0) / cv.ptBase[cat] * 100 : null })).filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+    const combos = [];
+    for (const [ch, o] of Object.entries(cur.matrix)) for (const [cat, n] of Object.entries(o)) if (!ex.includes(cat) && n) combos.push({ ch, cat, n, prev: (prev.matrix[ch] || {})[cat] || 0, share: pc ? n / pc * 100 : 0 });
+    for (const [ch, o] of Object.entries(prev.matrix)) for (const [cat, n] of Object.entries(o)) if (!ex.includes(cat) && n && !(cur.matrix[ch] || {})[cat]) combos.push({ ch, cat, n: 0, prev: n, share: 0 });
+    combos.forEach(x => { x.expected = x.prev * ratio; });
+    const top = combos.filter(x => x.n).sort((a, b) => b.n - a.n);
+    const rising = combos.filter(x => x.n - x.prev >= 3 && x.n >= 5 && (x.prev === 0 || x.n > x.expected * 1.3)).sort((a, b) => (b.n - b.expected) - (a.n - a.expected));
+    const falling = combos.filter(x => x.prev >= 5 && x.prev - x.n >= 3 && x.n < x.expected * 0.7).sort((a, b) => (a.n - a.expected) - (b.n - b.expected));
+    // 기회: 전체에서 비중 큰 부위가, 문의 많은 채널 안에서는 절반도 안 나옴
+    const gaps = [];
+    for (const c of chans.filter(c => c.n >= 15 && c.share >= 10)) {
+      const o = cur.matrix[c.ch] || {}, chPc = Object.entries(o).filter(([k]) => !ex.includes(k)).reduce((t, [, v]) => t + v, 0); if (chPc < 15) continue;   // 부위가 적힌 문의가 15건 미만인 채널은 판단 안 함
+      for (const p of parts.filter(p => p.share >= 10)) { const inCh = (o[p.cat] || 0) / chPc * 100; if (inCh < p.share / 2) gaps.push({ ch: c.ch, cat: p.cat, inCh, overall: p.share, n: o[p.cat] || 0 }); }
+    }
+    gaps.sort((a, b) => (b.overall - b.inCh) - (a.overall - a.inCh));
+    return { tc, tp, pc, chans, parts, top, rising, falling, gaps, ratio };
+  }
+  function weakParts(cur, prev, settings) { return partMoves(cur, prev, settings).down; }
 
-  const api = { countryOf, REGIONS, DEFAULT_SETTINGS, isWeeklyWorkbook, parseWeeklyWorkbook, crossCheckSheet, teamCell, detectDate, detectRegion, parseEnglishWorkbook, buildRecord, splitParts, normContact, maskContact, maskName,
-    periodFor, shiftPeriod, aggregate, weakParts, addDays, dow, parseYmd, fmtDate, ymd, norm, clean };
+  const RESV = { regions: null };   // 앱이 '예약을 실제로 기록하는 권역' 목록을 넣어줌
+  function setResvRegions(list) { RESV.regions = list && list.length ? list.slice() : null; }
+  const api = { isKrRawWorkbook, parseKrRaw, partCells, isJapanWorkbook, parseJapanWorkbook, setResvRegions, countryOf, REGIONS, DEFAULT_SETTINGS, isWeeklyWorkbook, parseWeeklyWorkbook, crossCheckSheet, teamCell, detectDate, detectRegion, parseEnglishWorkbook, buildRecord, splitParts, normContact, maskContact, maskName,
+    periodFor, shiftPeriod, aggregate, weakParts, partMoves, mixAnalysis, addDays, dow, parseYmd, fmtDate, ymd, norm, clean };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.IW = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -1707,10 +1907,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 (function () {
   'use strict';
   const { REGIONS } = IW;
-  const APP_VERSION = '2611041500';
+  const APP_VERSION = '2611111300';
   const LOGO_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"> <defs> <linearGradient id=\"bg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#D8323F\"/><stop offset=\".55\" stop-color=\"#BE1E2D\"/><stop offset=\"1\" stop-color=\"#8E1622\"/></linearGradient> <linearGradient id=\"area\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".34\"/><stop offset=\"1\" stop-color=\"#fff\" stop-opacity=\"0\"/></linearGradient> <radialGradient id=\"sheen\" cx=\".25\" cy=\"0\" r=\".9\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".22\"/><stop offset=\"1\" stop-color=\"#fff\" stop-opacity=\"0\"/></radialGradient> <radialGradient id=\"glow\"><stop offset=\"0\" stop-color=\"#fff\" stop-opacity=\".55\"/><stop offset=\"1\" stop-color=\"#fff\" stop-opacity=\"0\"/></radialGradient> <linearGradient id=\"fx\" x1=\"0\" x2=\"1\"><stop offset=\".55\" stop-color=\"#fff\"/><stop offset=\".83\" stop-color=\"#000\"/></linearGradient><mask id=\"fade\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"512\" height=\"512\"><rect width=\"512\" height=\"512\" fill=\"url(#fx)\"/></mask> <clipPath id=\"c\"><rect width=\"512\" height=\"512\" rx=\"112\"/></clipPath> </defs> <g clip-path=\"url(#c)\"> <rect width=\"512\" height=\"512\" fill=\"url(#bg)\"/> <rect width=\"512\" height=\"512\" fill=\"url(#sheen)\"/> <g stroke=\"#fff\" stroke-opacity=\".09\" stroke-width=\"2\"><line x1=\"0\" y1=\"176\" x2=\"512\" y2=\"176\"/><line x1=\"0\" y1=\"272\" x2=\"512\" y2=\"272\"/><line x1=\"0\" y1=\"368\" x2=\"512\" y2=\"368\"/></g> <path d=\"M-20,368 C60,368 94,262 170,262 S276,378 342,330 S408,178 422,128 L422,532 L-20,532 Z\" fill=\"url(#area)\" mask=\"url(#fade)\"/> <path d=\"M-20,368 C60,368 94,262 170,262 S276,378 342,330 S408,178 422,128\" fill=\"none\" stroke=\"#fff\" stroke-width=\"34\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/> <circle cx=\"422\" cy=\"128\" r=\"64\" fill=\"url(#glow)\"/> <circle cx=\"422\" cy=\"128\" r=\"28\" fill=\"#fff\"/> <circle cx=\"422\" cy=\"128\" r=\"11\" fill=\"#BE1E2D\"/> </g></svg>";
   // 앱이 새 버전으로 바뀌면 전체 화면으로 보여줄 변경 내용 (버전마다 고쳐 쓰기)
-  const WHATS_NEW = ['뽐나게빼의원 로고 적용, 앱을 열 때 로고 모션', '탭 선택 표시가 미끄러지는 모션, 기간을 넘길 때는 짧고 빠른 모션', '권역별 고유색(영어권 파랑 · 국내권 빨강 · 일본어권 보라) 강화, 화면 전환 모션', '수술 통계: 월간 리포트 (주차별 · 부위별 · 원장별, 영업일·진료일 기준 일평균)', '애플식 유리 디자인', '새 통계 알림 (올린 사람이 알림 보내기를 누르면 폰 잠금 화면에 알림)', '영어권 신규 환자 국가 분석 (연락처 국가번호 기준)', '여러 날이 합쳐진 Daily DB 파일 이름 인식', '엑셀 맨 오른쪽 표 밖 데이터는 무시'];
+  const WHATS_NEW = ['일본어권 통계 시작: 일본어권 DB 폴더를 연결하면 매일 자동 반영 (엑셀 올리기도 가능)', '국내권: 명부·전화플친 원본 DB 연결 → 주간 통합 파일이 나오기 전 이번 주 숫자도 매일 반영', '어디서·어떤 부위가 많았는지 순위와 전략 (대시보드)'];
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayStr = () => IW.fmtDate(new Date());
@@ -1757,7 +1957,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     L.push(`보안 컨텍스트: ${window.isSecureContext ? '예' : '아니오'}`);
     L.push(`저장 위치: ${IWStore.mode === 'nas' ? 'NAS 폴더 (' + IWStore.dirName + ')' : IWStore.pending ? '폴더 다시 연결 필요 (' + IWStore.dirName + ')' : '브라우저'}`);
     if (IWStore.dir) { try { L.push(`폴더 권한: ${await IWStore.dir.queryPermission({ mode: 'readwrite' })}`); } catch (e) { L.push('폴더 권한 확인 실패: ' + e.name); } }
-    L.push(`DB 폴더: ${Object.entries(S.srcHandles).filter(([, h]) => h).map(([r, h]) => REGIONS[r].label + '=' + h.name).join(', ') || '연결 안 됨'}`);
+    L.push(`DB 폴더: ${Object.entries(S.srcHandles).filter(([, h]) => h).map(([r, h]) => srcLabel(r) + '=' + h.name).join(', ') || '연결 안 됨'}`);
     L.push(`저장된 날: ${Object.keys(S.records).length}`);
     L.push(`폰 연결: ${IWCloud.enabled() ? (IWCloud.signedIn() ? IWCloud.role + ' · 대기 ' + pendingGet().months.length + '개월' + (S.lastPush && !S.lastPush.ok ? ' · 실패: ' + S.lastPush.msg : '') : '로그인 안 됨') : '설정 파일(cloud.json) 없음'}`);
     return L.join('\n');
@@ -1792,7 +1992,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   function mergeSettings(saved) {
     const d = JSON.parse(JSON.stringify(IW.DEFAULT_SETTINGS));
     if (!saved) return d;
-    return Object.assign(d, saved, { channels: Object.assign(d.channels, saved.channels || {}), channelAliases: Object.assign(d.channelAliases, saved.channelAliases || {}) });
+    const ch = Object.assign({}, saved.channels || {}); if (Array.isArray(ch.jp) && !ch.jp.length) delete ch.jp;   // 일본어권 채널이 비어 있던 예전 설정 → 기본값
+    const al = Object.assign({}, saved.channelAliases || {}); for (const k of Object.keys(d.channelAliases)) if (al[k]) al[k] = [...new Set(al[k].concat(d.channelAliases[k]))];
+    return Object.assign(d, saved, { channels: Object.assign(d.channels, ch), channelAliases: Object.assign(d.channelAliases, al) });
   }
   async function reload() {
     S.fromCache = null;
@@ -1803,6 +2005,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       S.records = records || {}; S.settings = mergeSettings(settings); S.fromCache = fromCache || null;
       try { S.surg = await IWStore.loadSurgery(); } catch (e) { }
       try { await surgCalLoad(); } catch (e) { }
+      try { await repIndex(); } catch (e) { }
     } catch (e) {
       console.error(e);
       const c = await IWStore.cacheInfo();
@@ -2104,8 +2307,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'push-open') openedFromPush(e.data.tag, e.data.body); });
 
   /* 업데이트 완료: 전체 화면 (로고가 그려지고 내용이 차례로 나타남) */
-  function showUpdated({ title, sub, items, ok, onOk, check = true, cancel }) {
-    const old = document.getElementById('updDone'); if (old) old.remove();
+  function showUpdated({ title, sub, items, ok, onOk, onClose, check = true, cancel }) {
+    const old = document.getElementById('updDone'); if (old) { if (old._onClose) { try { old._onClose(); } catch (e) { } } old.remove(); }
     const el = document.createElement('div'); el.id = 'updDone'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title);
     el.innerHTML = `<div class="ud-card">
       <div class="ud-logo">${LOGO_SVG}</div>
@@ -2115,8 +2318,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <button class="upd-go big" id="udOk"><span>${esc(ok || '시작하기')}</span></button>${cancel ? `<button class="btn ghost" id="udNo" style="width:100%;justify-content:center;margin-top:8px">${esc(cancel)}</button>` : ''}</div>`;
     document.body.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
-    const close = () => { el.classList.add('hide'); setTimeout(() => el.remove(), 380); };
-    el.querySelector('#udOk').onclick = () => { close(); if (onOk) onOk(); };
+    el._onClose = onClose || null;
+    const close = () => { const f = el._onClose; el._onClose = null; el.classList.add('hide'); setTimeout(() => el.remove(), 380); if (f) f(); };
+    el.querySelector('#udOk').onclick = () => { el._onClose = null; close(); if (onOk) onOk(); };
     const no = el.querySelector('#udNo'); if (no) no.onclick = close; el.addEventListener('click', e => { if (e.target === el) close(); });
     document.addEventListener('keydown', function k(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', k); } });
   }
@@ -2173,7 +2377,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   /* 공정한 비교: 이번 기간이 아직 다 안 들어왔으면, 이전 기간도 같은 경과일까지만 잘라서 비교 */
   function fairPrev(region, p, pp, cur) {
     const full = IW.aggregate(S.records, region, pp.start, pp.end);
-    const ds = Object.keys(cur.byDate).sort(); if (!ds.length) return { prev: full, partial: false, note: '' };
+    const today = todayStr();
+    const ds = Object.keys(cur.byDate).filter(d => d <= today).sort(); if (!ds.length) return { prev: full, partial: false, note: '' };
+    // 전체 권역: 권역마다 입력된 마지막 날이 다르면(예: 국내 화요일까지, 영어권 수요일까지) 권역별로 같은 날까지만 비교
+    if (region === 'all') {
+      const lastOf = r => { let m = null; for (const x of Object.values(S.records)) if (x.region === r && x.date >= p.start && x.date <= p.end && x.date <= today && !(x.empty && !x.savedAsZero) && (!m || x.date > m)) m = x.date; return m; };
+      const lasts = Object.keys(REGIONS).map(r => [r, lastOf(r)]).filter(z => z[1]);
+      const effEnd0 = IW.dow(p.end) === 0 ? IW.addDays(p.end, -1) : p.end;
+      if (lasts.length > 1 && lasts.some(z => z[1] < effEnd0)) {
+        const cutOf = last => { let cut; if (p.type === 'week') cut = IW.addDays(pp.start, Math.round((IW.parseYmd(last) - IW.parseYmd(p.start)) / 864e5)); else if (p.type === 'month') { const d = +last.slice(8), pe = +pp.end.slice(8); cut = pp.start.slice(0, 8) + String(Math.min(d, pe)).padStart(2, '0'); } else cut = (+pp.start.slice(0, 4)) + last.slice(4); return cut > pp.end ? pp.end : cut; };
+        const recs = {}; for (const [r, l] of lasts) { const cut = cutOf(l); for (const [k, x] of Object.entries(S.records)) if (x.region === r && x.date >= pp.start && x.date <= cut) recs[k] = x; }
+        const DW = ['일', '월', '화', '수', '목', '금', '토'];
+        const lab = lasts.map(([r, l]) => `${REGIONS[r].label} ${p.type === 'week' ? DW[IW.dow(l)] + '요일' : `${+l.slice(5, 7)}/${+l.slice(8)}`}`).join(' · ');
+        return { prev: IW.aggregate(recs, 'all', pp.start, pp.end), partial: true, until: lab, note: `권역마다 입력된 날이 달라서(${lab}까지), 이전 ${periodName(p.type)}도 권역별로 같은 요일까지만 비교해요` };
+      }
+    }
     const last = ds[ds.length - 1];
     let effEnd = p.end; if (IW.dow(effEnd) === 0) effEnd = IW.addDays(effEnd, -1);   // 일요일 휴진은 빼고 판단
     if (last >= effEnd) return { prev: full, partial: false, note: '' };
@@ -2327,7 +2545,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       if (pk.length >= 2) out.push({ ic: 'dot', h: `부위 중에서는 <b>${esc(pk[0].k)}</b> 문의가 예약으로 가장 잘 이어졌어요 (${pk[0].r}%, ${pk[0].h}/${pk[0].n}). 가장 낮은 부위는 <b>${esc(pk[pk.length - 1].k)}</b> ${pk[pk.length - 1].r}%.` });
     }
     if (cur.notesDays && cur.notesBase) out.push({ ic: 'dot', h: `문의 ${cur.notesBase}건 중 <b>비용 문의 ${cur.cost}건 (${pct1(cur.cost, cur.notesBase)}%)</b>${cur.dateAsk ? `, 상담날짜 문의 ${cur.dateAsk}건` : ''}.` });
-    if (weak[0]) out.push({ ic: 'warn', h: `<b>${esc(weak[0].cat)}</b> 문의가 이전보다 줄었어요 (${weak[0].before}→${weak[0].now}건). 아래 실행 플랜을 확인해주세요.` });
+    if (weak[0] && !weak[0].small) out.push({ ic: 'warn', h: `<b>${esc(weak[0].cat)}</b> 문의가 전체 흐름보다 더 줄었어요 (${weak[0].before}→${weak[0].now}건). 아래 점검 포인트를 확인하세요.` });
     const np = cur.total ? Math.round(cur.noPart / cur.total * 100) : 0;
     if (np >= 15) out.push({ ic: 'note', h: `부위가 적히지 않은 문의가 ${cur.noPart}건 (${np}%)이라 부위 통계는 참고용이에요.` });
     return out;
@@ -2339,7 +2557,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const st = S.settings, p = IW.periodFor(S.ptype, S.anchor, st), pp = IW.shiftPeriod(p, -1, st);
     const cur = IW.aggregate(S.records, S.region, p.start, p.end), cmp = fairPrev(S.region, p, pp, cur), prev = cmp.prev;
     const chs = sorted(cur.channels).filter(x => x[1] > 0), pts = sorted(cur.parts).filter(x => x[0] !== '부위미상');
-    const weak = IW.weakParts(cur, prev, st);
+    const moves = IW.partMoves(cur, prev, st), weak = moves.down;
+    S._cv = convAgg(S.region, p.start, p.end);
     const wd = workdays(p.start, p.end);
     const npPct = cur.total ? Math.round(cur.noPart / cur.total * 100) : 0;
     // 예약·비용 칸을 한 번도 쓰지 않은 권역(지금 영어권)은 '0%'가 아니라 지표 자체를 숨김
@@ -2464,7 +2683,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="row"><button class="btn sm" id="pPrev">◀</button><b style="min-width:120px;text-align:center">${esc(p.label)}</b><button class="btn sm" id="pNext">▶</button><button class="btn sm ghost" id="pToday">오늘</button></div>
       ${oneClickBtn()}
     </div>
-    <div class="card summary">${sum}${regionRow}${S.region === 'en' && cur.total ? `<div class="muted small" style="margin-top:6px">ⓘ 영어권 DB에는 <b>신규 환자</b>만 기록돼요</div>` : ''}
+    ${futureWarn()}<div class="card summary">${sum}${regionRow}${S.region === 'en' && cur.total ? `<div class="muted small" style="margin-top:6px">ⓘ 영어권 DB에는 <b>신규 환자</b>만 기록돼요</div>` : ''}
       ${ins.length ? `<ul class="ins">${ins.map(i => `<li><span class="ic ${i.ic}">${{ up: '▲', down: '▼', warn: '!', note: 'i', dot: '' }[i.ic] || ''}</span><span>${i.h}</span></li>`).join('')}</ul>` : ''}
       ${cmp.partial && cur.total ? `<div class="muted small" style="margin-top:8px">ⓘ ${esc(cmp.note)}</div>` : ''}
       ${lastUpdLine()}
@@ -2483,11 +2702,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     ${convBars}
     ${S.region === 'en' || S.region === 'all' ? countryCard(S.region === 'all' ? IW.aggregate(S.records, 'en', p.start, p.end) : cur, Object.keys((S.region === 'all' ? IW.aggregate(S.records, 'en', p.start, p.end) : cur).byDate).length) : ''}
     ${cur.total && (chMulti || wpCard) ? `<div class="grid g2" style="margin-top:16px">${chMulti}${wpCard}</div>` : ''}
+    ${cur.total ? mixHtml(IW.mixAnalysis(cur, prev, st, S._cv), cur, prev, p, cmp) : ''}
     <div class="grid g2" style="margin-top:16px">
-      <div class="card"><h3>떨어지는 부위 & 실행 플랜</h3>${weakHtml(weak, cur, prev, p)}</div>
-      <div class="card"><h3>채널 × 부위</h3>${heatHtml(cur)}</div>
+      <div class="card"><h3>하락 부위 · 점검 포인트</h3>${weakHtml(weak, cur, prev, p, cmp, moves)}</div>
+      <div class="card"><h3>상승 부위 · 확대 포인트</h3>${upHtml(moves.up, cur, prev, p, cmp)}</div>
     </div>
-    ${warnRecs.length ? `<div class="card" style="margin-top:16px"><h3>확인할 경고<span class="right tag warn">${warnRecs.length}일</span></h3>${warnRecs.sort((a, b) => a.date < b.date ? -1 : 1).map(r => `<details><summary>${r.date} · ${REGIONS[r.region].label} · 경고 ${r.warnings.length}개</summary><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`).join('')}</div>` : ''}
+    <div class="card" style="margin-top:16px"><h3>채널 × 부위</h3>${heatHtml(cur)}</div>
+    ${warnRecs.length ? `<div class="card" style="margin-top:16px"><h3>데이터 경고<span class="right tag warn">${warnRecs.length}일</span></h3>${warnRecs.sort((a, b) => a.date < b.date ? -1 : 1).map(r => `<details><summary>${r.date} · ${REGIONS[r.region].label} · 경고 ${r.warnings.length}개</summary><ul>${r.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></details>`).join('')}</div>` : ''}
     `;
     drawCharts();
     const gl2 = $('#goLog'); if (gl2) gl2.onclick = () => { S.view = 'settings'; document.querySelectorAll('.navbtn').forEach(x => x.classList.toggle('on', x.dataset.view === 'settings')); render(); setTimeout(() => { const e = $('#actCard'); if (e) e.scrollIntoView({ behavior: 'smooth' }); }, 100); };
@@ -2496,6 +2717,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     $('#pPrev').onclick = () => { S.anchor = IW.shiftPeriod(p, -1, st).start; render(); };
     $('#pNext').onclick = () => { S.anchor = IW.shiftPeriod(p, 1, st).start; render(); };
     $('#pToday').onclick = () => { S.anchor = todayStr(); render(); };
+  }
+  function futureWarn() {
+    if (S.source === 'cloud') return '';
+    const t = todayStr(), f = Object.values(S.records).filter(r => r.date > t && !(r.empty && !r.savedAsZero)).sort((a, b) => a.date < b.date ? -1 : 1);
+    if (!f.length) return '';
+    return `<div class="warnbox" style="margin-bottom:12px"><b>오늘 이후 날짜 기록 ${f.length}개</b> — ${f.slice(0, 4).map(r => `${+r.date.slice(5, 7)}/${+r.date.slice(8)} ${REGIONS[r.region].label} ${r.total}건${r.source && r.source.name ? ` (${esc(r.source.name)})` : ''}`).join(', ')}. 파일 이름의 날짜가 잘못됐을 수 있어요. <b>저장 기록</b>에서 확인하고 지워주세요.</div>`;
   }
   function fmtWhen(iso) { return iso ? new Date(iso).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''; }
   function lastUpdLine() {
@@ -2518,11 +2745,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     return { rows: top.map(([cc, n, isRest]) => ({ cc, name: isRest ? cc : ctryName(cc), n, pct: known ? Math.round(n / known * 1000) / 10 : 0 })), known };
   }
   function countryCard(cur, enDays) {
-    const g = cur.geo || {}; if (!g.n) return '';
+    const g = cur.geo || {};
+    if (!g.n) return `<div class="card" style="margin-top:16px"><h3>신규 환자 국가 분포</h3><div class="empty"><b>이 기간에는 국가 정보가 없어요</b>국가 분석은 <b>영어권 Daily DB</b>의 연락처 국가번호(+44 등)로 해요. 주간 통합 엑셀에는 연락처가 없어서, PC의 <b>데이터 입력 → 영어권 폴더 연결</b>(★영어권 › DB)이 되어 있어야 나와요. 연락처는 저장하지 않고 국가만 남겨요.</div></div>`;
     const { rows, known } = countryRows(cur);
     const mx = Math.max(1, ...rows.map(r => r.n));
     const miss = [['id', '인스타 등 아이디'], ['nocode', '국가번호 없음'], ['empty', '연락처 없음'], ['invalid', '번호 형식 오류']].filter(([k]) => g[k]).map(([k, l]) => `${l} ${g[k]}`).join(' · ');
-    return `<div class="card" style="margin-top:16px"><h3>신규 환자 국가<span class="right muted small">국가 확인 ${known}명 / 연락처 ${g.n}건</span></h3>
+    return `<div class="card" style="margin-top:16px"><h3>신규 환자 국가 분포<span class="right muted small">국가 확인 ${known}명 / 연락처 ${g.n}건</span></h3>
       ${rows.length ? `<div class="bars">${rows.map(r => `<div class="bar" data-tip="${tipA(r.name, [`${r.n}명 · 국가 확인된 환자의 ${r.pct}%`])}"><span class="nm">${esc(r.name)}</span><span class="tr"><span class="fl" style="width:${r.n / mx * 100}%"></span></span><span class="vl">${r.pct}%<small>${r.n}명</small></span></div>`).join('')}</div>` : emptyBox()}
       <div class="muted small" style="margin-top:10px">ⓘ 연락처의 <b>국가번호(+44 등)</b>로만 판단해요. 국가 미상 ${g.n - known}건${miss ? ` (${esc(miss)})` : ''}은 비율에서 빠져요.${g.days < enDays ? ` · 국가 정보가 있는 날 ${g.days}일 / 영어권 ${enDays}일 (주간 파일에는 연락처가 없어서, Daily DB를 읽은 날만 있어요)` : ''} 연락처 자체는 저장하지 않아요.</div>
       ${tableView(['국가', '환자 수', '비율'], rows.map(r => [r.name, r.n + '명', r.pct + '%']))}</div>`;
@@ -2615,26 +2843,90 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
   function emptyBox() { return `<div class="empty"><b>데이터가 없어요</b>이 기간에 저장된 기록이 없습니다.</div>`; }
 
-  function weakHtml(weak, cur, prev, p) {
-    const st = S.settings;
+  /* 떨어지는/잘 나가는 부위: 전체 문의가 같이 줄거나 늘어난 만큼은 빼고, 그 부위만의 변화를 봄 */
+  function moveContext(cur, prev, p, cmp) {
+    const tp = prev.total ? Math.round((cur.total - prev.total) / prev.total * 100) : null;
+    const same = cmp && cmp.partial ? `이전 ${periodName(p.type)} 같은 기간` : `이전 ${periodName(p.type)}`;
+    return { tp, same };
+  }
+  /* 예약 전환율은 예약을 실제로 기록하는 권역만으로 계산 (영어권 Daily DB는 예약 칸을 안 써서 0으로 섞이면 안 됨) */
+  function convAgg(region, start, end) {
+    const rs = (region === 'all' ? Object.keys(REGIONS) : [region]).filter(r => usedFields(r).resv); if (!rs.length) return null;
+    const recs = {}; for (const [k, x] of Object.entries(S.records)) if (rs.includes(x.region)) recs[k] = x;
+    const g = IW.aggregate(recs, 'all', start, end); g.regionsUsed = rs; return g.resvDays ? g : null;
+  }
+  const jo = (w, pair) => josa(w, pair[0], pair[1]);   // 받침 있으면 앞 글자(은/이), 없으면 뒤 글자(는/가)
+  function convOf(cv, c) { if (!cv) return null; const b = cv.ptBase[c] || 0; return b >= MIN_N ? pct1(cv.resvPt[c] || 0, b) : null; }
+  function weakHtml(weak, cur, prev, p, cmp, moves) {
+    const st = S.settings, { tp, same } = moveContext(cur, prev, p, cmp);
     if (!prev.days) return `<div class="empty"><b>비교할 이전 기간 데이터가 없어요</b>이전 ${periodName(p.type)} 기록이 쌓이면 자동으로 찾아요.</div>`;
-    if (!weak.length) return `<div class="okbox">이전 ${periodName(p.type)} 대비 크게 줄어든 부위가 없어요. <span class="muted small">(이전 기간 ${st.weakMinCount}건 이상인 부위만 판정)</span></div>`;
-    return weak.slice(0, 3).map(w => {
-      const top = w.chDrops[0];
-      const good = Object.keys(cur.matrix).filter(ch => ((cur.matrix[ch] || {})[w.cat] || 0) >= ((prev.matrix[ch] || {})[w.cat] || 0) && ((cur.matrix[ch] || {})[w.cat] || 0) > 0);
-      const small = w.before < 10 ? `<span class="tag" title="건수가 적어 변동이 클 수 있어요">표본 적음</span>` : '';
+    const head = tp != null && Math.abs(tp) >= 15 ? `<div class="${tp < 0 ? 'warnbox' : 'okbox'}" style="margin-bottom:10px">전체 문의가 ${same} 대비 <b>${tp > 0 ? '+' : ''}${tp}%</b> ${tp < 0 ? '줄었어요. 부위만의 문제가 아니라 전체 유입이 줄었을 수 있어서, 아래는 <b>전체보다 더 많이 줄어든 부위</b>만 골랐어요.' : '늘었어요. 아래는 그 흐름보다도 더 줄어든 부위예요.'}</div>` : '';
+    if (!weak.length) return head + `<div class="okbox">전체 흐름보다 크게 줄어든 부위가 없어요. <span class="muted small">(이전 기간 ${st.weakMinCount}건 이상 · 전체 증감을 감안해 20% 넘게 덜 나온 부위만 판정)</span></div>`;
+    const cv = S._cv, avgConv = cv && cv.resvBase ? pct1(cv.resv, cv.resvBase) : null;
+    return head + weak.slice(0, 3).map(w => {
+      const top = w.chDrops[0], good = w.chUps.filter(m => m.to > 0);
+      const conv = convOf(cv, w.cat);
+      const tag = w.small ? `<span class="tag" data-tip="${esc('이전 건수가 10건 미만이라 우연일 수 있어요')}">표본 부족 · 관찰</span>` : '';
+      const todo = w.small ? [`다음 ${periodName(p.type)}까지 지켜보기 — 이전 ${w.before}건이라 몇 건만 달라져도 크게 보여요`] : [
+        top ? `<b>${esc(top.ch)}</b>에서 가장 많이 줄었어요 (${top.from}→${top.to}건). 이 기간 ${esc(top.ch)}의 ${esc(w.cat)} 게시물·광고·답변 속도에 변화가 있었는지 확인` : '',
+        good.length ? `<b>${esc(good[0].ch)}</b>에서는 오히려 늘었어요 (${good[0].from}→${good[0].to}건). 그 채널에서 쓰는 ${esc(w.cat)} 콘텐츠·문구를 ${top ? esc(top.ch) : '다른 채널'}에도 써볼지 검토` : '',
+        conv != null ? `예약 전환율 ${conv}%${avgConv != null ? ` (전체 평균 ${avgConv}%)` : ''} — ${avgConv != null && conv < avgConv ? '문의도 줄고 전환도 낮아서 상담 응대 스크립트도 같이 점검' : '문의만 줄었고 예약 전환은 괜찮아요 → 노출·유입 쪽부터 확인'}` : '',
+        `회복 기준: 다음 ${periodName(p.type)} ${esc(w.cat)} 문의 ${Math.max(1, Math.round(Math.min(w.before, w.expected)))}건 이상${w.expected > w.before ? ` (이전 수준) · 비중 ${w.shareBefore}% 회복` : ' (전체 흐름 기준 기대치)'}`].filter(Boolean);
       return `<div class="card weak" style="margin-bottom:10px;box-shadow:none">
-        <div class="head"><b>${esc(w.cat)}</b><span class="down">${w.before}→${w.now}건 (${w.pct}%)</span>${small}</div>
-        <ul>
-          <li><b>어디서 줄었나:</b> ${w.chDrops.length ? w.chDrops.slice(0, 3).map(c => `${esc(c.ch)} ${c.from}→${c.to}`).join(', ') : '채널 정보 없음'}</li>
-          ${good.length ? `<li><b>유지·증가한 채널:</b> ${good.map(esc).join(', ')}</li>` : ''}
-        </ul>
-        <ol>
-          ${top ? `<li>${esc(top.ch)}에 ${esc(w.cat)} 비포애프터·후기 콘텐츠 보강</li>` : ''}
-          ${good.length ? `<li>${esc(good[0])}에서 반응 좋은 ${esc(w.cat)} 소개 문구를 ${top ? esc(top.ch) : '다른 채널'}에 적용</li>` : ''}
-          <li>다음 ${periodName(p.type)}에 ${esc(w.cat)} 문의가 ${w.before}건 수준으로 회복됐는지 확인</li>
-        </ol></div>`;
-    }).join('') + `<div class="muted small">플랜은 문의 건수만 보고 만든 제안이에요. 광고비·게시물 수는 반영되지 않아요.</div>`;
+        <div class="head"><b>${esc(w.cat)}</b><span class="down">${w.before}→${w.now}건</span>${tag}</div>
+        <div class="small muted" style="margin:2px 0 6px">전체 흐름대로면 약 ${w.expected}건이었어야 해요 → 기대보다 <b class="down">${Math.abs(w.vsTrend)}% 적음</b> · 비중 ${w.shareBefore}% → ${w.shareNow}%</div>
+        <ol>${todo.map(t => `<li>${t}</li>`).join('')}</ol></div>`;
+    }).join('') + `<div class="muted small">문의 건수 기반 점검 포인트예요. 광고비·게시물 수·상담 내용은 앱이 모르니, 원인은 담당자와 확인해주세요.</div>`;
+  }
+  /* 어디서 · 어떤 부위가 많이 들어왔나 → 전략 (전부 문의 건수·예약 기록에서 나온 사실만) */
+  function mixHtml(X, cur, prev, p, cmp) {
+    const pn = periodName(p.type), same = cmp && cmp.partial ? `이전 ${pn} 같은 기간` : `이전 ${pn}`, hasPrev = !!prev.days;
+    const f1 = v => v == null ? '–' : (Math.round(v * 10) / 10).toFixed(1);
+    const d = (a, b) => !hasPrev ? '' : a === b ? '<span class="flat">±0</span>' : `<span class="${a > b ? 'up' : 'down'}">${a > b ? '+' : '−'}${Math.abs(a - b)}</span>`;
+    const rank = (list, key, lab) => `<ol class="mixrank">${list.slice(0, 5).map(x => `<li><b>${esc(x[key])}</b><span class="mx-bar"><i style="width:${Math.max(3, x.share / (list[0].share || 1) * 100)}%"></i></span><span class="mx-v">${x.n}건 <small>${f1(x.share)}%</small> ${d(x.n, x.prev)}</span>${x.conv != null ? `<span class="mx-c" data-tip="${esc('예약 전환율 (그 ' + lab + ' 문의 중 예약)')}">예약 ${f1(x.conv)}%</span>` : ''}</li>`).join('')}</ol>`;
+    const cv = S._cv, avgConv = cv && cv.resvBase ? cv.resv / cv.resvBase * 100 : null;
+    // 전략: 데이터에서 바로 나오는 것만, 근거 숫자와 함께
+    const S1 = [];
+    const t3 = X.top.slice(0, 3), t3s = t3.reduce((t, x) => t + x.share, 0);
+    if (t3.length) S1.push({ k: '유지', t: `<b>${t3.map(x => `${esc(x.ch)}×${esc(x.cat)}`).join(', ')}</b>${t3.length ? jo(`${t3[t3.length - 1].ch}×${t3[t3.length - 1].cat}`, '이가') : ''} 부위 문의의 <b>${f1(t3s)}%</b>예요. 이 조합의 콘텐츠·광고·답변 속도는 줄이지 말고 유지하세요.` });
+    if (X.rising[0]) S1.push({ k: '확대', t: `<b>${X.rising.slice(0, 2).map(x => `${esc(x.ch)}×${esc(x.cat)} ${x.prev}→${x.n}건`).join(', ')}</b> — 전체 흐름보다 빠르게 늘었어요. 이 기간 이 채널에 올린 콘텐츠·광고를 기록해두고 비중을 늘려볼 후보예요.` });
+    if (X.falling[0]) S1.push({ k: '점검', t: `<b>${X.falling.slice(0, 2).map(x => `${esc(x.ch)}×${esc(x.cat)} ${x.prev}→${x.n}건`).join(', ')}</b> — 전체 흐름보다 크게 줄었어요. 해당 채널의 게시물·광고 노출이 바뀌었는지 먼저 확인하세요.` });
+    if (X.gaps[0]) { const g = X.gaps[0]; S1.push({ k: '기회', t: `<b>${esc(g.cat)}</b>${jo(g.cat, '은는')} 전체 부위 문의의 ${f1(g.overall)}%인데, 문의가 많은 <b>${esc(g.ch)}</b>에서는 ${f1(g.inCh)}%(${g.n}건)뿐이에요. ${esc(g.ch)}에 ${esc(g.cat)} 콘텐츠를 보강해볼 여지가 있어요.` }); }
+    const cc = X.chans.filter(c => c.conv != null);
+    if (cc.length >= 2 && avgConv != null) {
+      const hi = cc.slice().sort((a, b) => b.conv - a.conv)[0], lo = cc.slice().sort((a, b) => a.conv - b.conv)[0];
+      if (hi.conv - lo.conv >= 10) S1.push({ k: '전환', t: `예약 전환율 <b>${esc(hi.ch)} ${f1(hi.conv)}%</b> vs <b>${esc(lo.ch)} ${f1(lo.conv)}%</b> (평균 ${f1(avgConv)}%${cv && cv.regionsUsed && S.region === 'all' ? `, ${cv.regionsUsed.map(r => REGIONS[r].label).join('·')}만` : ''}). ${lo.n >= X.chans[0].n * 0.3 ? `${esc(lo.ch)}${jo(lo.ch, '은는')} 문의가 많은데(${lo.n}건) 예약으로 덜 이어져요 — 상담 응대·안내 문구를 ${esc(hi.ch)} 방식과 비교해보세요.` : `${esc(hi.ch)} 문의는 예약까지 잘 이어져요 — 이 채널 유입을 늘리는 쪽이 효율적일 수 있어요.`}` });
+    }
+    if (X.chans[0] && X.chans[0].share >= 50) S1.push({ k: '의존도', t: `문의의 <b>${f1(X.chans[0].share)}%</b>가 ${esc(X.chans[0].ch)} 한 곳에서 와요. 이 채널에 문제가 생기면 전체가 흔들리니 ${X.chans[1] ? `두 번째 채널(${esc(X.chans[1].ch)})을 ` : '다른 채널도 '}같이 키우는 걸 검토하세요.` });
+    const small = X.tc < 30;
+    return `<div class="card mixcard" style="margin-top:16px"><h3>유입 구조 · 실행 제안${hasPrev ? `<span class="right muted small">± = ${esc(same)} 대비</span>` : ''}</h3>
+      ${small ? `<div class="warnbox" style="margin-bottom:10px">이 기간 문의가 ${X.tc}건이라 순위가 쉽게 바뀌어요. 전략은 참고만 하세요.</div>` : ''}
+      <div class="grid g3 mixgrid">
+        <div><div class="mx-h">채널 순위</div>${rank(X.chans, 'ch', '채널')}</div>
+        <div><div class="mx-h">부위 순위</div>${rank(X.parts, 'cat', '부위')}</div>
+        <div><div class="mx-h">주요 조합 (채널 × 부위)</div><ol class="mixrank">${X.top.slice(0, 5).map(x => `<li><b>${esc(x.ch)} <span class="muted">×</span> ${esc(x.cat)}</b><span class="mx-v">${x.n}건 <small>${f1(x.share)}%</small> ${d(x.n, x.prev)}</span></li>`).join('')}</ol></div>
+      </div>
+      ${S1.length ? `<div class="mx-h" style="margin-top:14px">실행 제안</div><ul class="strat">${S1.map(s => `<li><span class="sk">${s.k}</span><span>${s.t}</span></li>`).join('')}</ul>` : ''}
+      <div class="muted small" style="margin-top:8px">문의 건수와 예약 기록만으로 만든 제안이에요. 광고비·게시물 수·상담 내용은 앱이 모르니 담당자와 같이 판단해주세요. 비율(%)은 부위가 여러 개인 문의를 부위마다 센 '부위 문의' 기준이에요.${cv && S.region === 'all' ? ` 예약 전환율은 예약을 기록하는 ${cv.regionsUsed.map(r => REGIONS[r].label).join('·')} 문의만으로 계산해요.` : ''}</div>
+    </div>`;
+  }
+  function upHtml(up, cur, prev, p, cmp) {
+    if (!prev.days) return `<div class="empty"><b>비교할 이전 기간 데이터가 없어요</b>이전 ${periodName(p.type)} 기록이 쌓이면 자동으로 찾아요.</div>`;
+    if (!up.length) return `<div class="empty"><b>전체 흐름보다 크게 늘어난 부위가 없어요</b><span class="muted small">이번 또는 이전 기간 ${S.settings.weakMinCount}건 이상 · 전체 증감을 감안해 20% 넘게 더 나온 부위만 골라요</span></div>`;
+    const cv = S._cv, avgConv = cv && cv.resvBase ? pct1(cv.resv, cv.resvBase) : null;
+    return up.slice(0, 3).map(w => {
+      const top = w.chUps[0], conv = convOf(cv, w.cat);
+      const tag = w.small ? `<span class="tag" data-tip="${esc('이번 건수가 10건 미만이라 우연일 수 있어요')}">표본 부족 · 관찰</span>` : '';
+      const todo = w.small ? [`다음 ${periodName(p.type)}에도 이어지는지 지켜보기`] : [
+        top ? `<b>${esc(top.ch)}</b>에서 가장 많이 늘었어요 (${top.from}→${top.to}건). 이 기간 ${esc(top.ch)}에 올린 ${esc(w.cat)} 콘텐츠·광고를 기록해두고 유지` : '',
+        w.chUps.length > 1 ? `여러 채널에서 같이 늘었어요 (${w.chUps.slice(0, 3).map(m => `${esc(m.ch)} ${m.from}→${m.to}`).join(', ')}) → 채널보다 ${esc(w.cat)} 자체 관심이 커진 신호일 수 있어요` : '',
+        conv != null ? (avgConv != null && conv < avgConv ? `예약 전환율은 ${conv}%로 평균(${avgConv}%)보다 낮아요 — 늘어난 문의가 예약으로 이어지도록 ${esc(w.cat)} 상담 응대 점검` : `예약 전환율 ${conv}%${avgConv != null ? ` (평균 ${avgConv}%)` : ''} — 문의가 예약까지 잘 이어지고 있어요`) : '',
+        `잘 된 채널의 방식을 다른 채널에도 시험해보기`].filter(Boolean);
+      return `<div class="card weak rise" style="margin-bottom:10px;box-shadow:none">
+        <div class="head"><b>${esc(w.cat)}</b><span class="up">${w.before}→${w.now}건</span>${tag}</div>
+        <div class="small muted" style="margin:2px 0 6px">${w.before ? `전체 흐름대로면 약 ${w.expected}건 → 기대보다 <b class="up">${w.vsTrend}% 많음</b> · ` : ''}비중 ${w.shareBefore}% → ${w.shareNow}%</div>
+        <ol>${todo.map(t => `<li>${t}</li>`).join('')}</ol></div>`;
+    }).join('') + `<div class="muted small">문의 건수만 보고 고른 거예요. 실제로 무엇이 잘 됐는지는 담당자와 확인해주세요.</div>`;
   }
   function heatHtml(cur) {
     const st = S.settings;
@@ -2681,57 +2973,123 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     return up;
   }
   /* 파일 읽기 → 분석 → (엑셀 요약표와 다르면 멈춤) → 저장 */
-  async function surgImport(file, opts = {}) {
-    let wb;
-    try { wb = XLSX.read(await file.arrayBuffer(), { type: 'array' }); }
-    catch (e) { S.surgIssue = { msg: '수술 DB 파일을 읽지 못했어요: ' + (e.name === 'NotReadableError' ? '다른 PC에서 열려 있거나 NAS 연결이 끊겼어요' : e.message) }; return { ok: false }; }
-    if (!SG.isSurgeryWorkbook(wb)) { S.surgIssue = { msg: `${file.name}: 수술 DB 모양(일별통계 시트의 날짜·원장 칸)이 아니에요` }; return { ok: false }; }
-    const res = SG.parseSurgeryWorkbook(XLSX, wb, {});
-    if (res.errors && res.errors.length) { S.surgIssue = { msg: res.errors.join(' · ') }; return { ok: false }; }
-    const data = res.data;
-    data.source = { name: file.name, lastModified: file.lastModified, size: file.size };
-    data.warnings = res.warnings.slice(0, 60); data.notes = res.notes.slice(0, 30);
-    const tot = SG.aggregate(data, data.first, data.last);
-    const summary = [`${md(data.first)} ~ ${md(data.last)} · 수술 부위 ${nf(tot.total)}건`, `원장별 ${data.doctors.filter(d => tot.docs[d]).map(d => `${d} ${nf(tot.docs[d].total)}`).join(' · ')}`,
-      data.check.cells ? (data.check.bad.length ? `엑셀 요약표와 다른 칸 ${data.check.bad.length}개` : `엑셀 요약표 ${nf(data.check.cells)}칸과 모두 일치`) : '엑셀 요약표 계산값이 없어 대조 못 함'];
-    if (data.check.bad.length && !opts.forceSave) { S.surgHeld = { data, summary }; S.surgIssue = { msg: `엑셀 요약표와 다른 칸이 ${data.check.bad.length}개 있어서 저장을 멈췄어요`, bad: data.check.bad }; return { ok: false, held: true }; }
-    if (opts.preview) {
-      return new Promise(resolve => showUpdated({ title: '수술 DB 확인', sub: file.name, items: summary.concat(res.warnings.length ? [`확인할 것 ${res.warnings.length}개 (수술 통계 화면 맨 아래)`] : []), ok: '저장하기', cancel: '취소', check: false,
-        onOk: async () => { const up = await surgSave(data); toast(`수술 DB 저장 완료${up ? ' · 폰에도 반영' : ''}`, 5000); render(); resolve({ ok: true }); } }));
+  /* ---------- 수술 DB: 파일 여러 개 · 폴더 연결 ----------
+     같은 날짜가 여러 파일에 있으면 '더 새 파일'(이름의 버전 v4.1 > v4.0, 같으면 수정 시각)이 이김.
+     새 파일이 덮는 기간(첫날~마지막 날)은 옛 파일 숫자를 쓰지 않음 → 고친 내용·지운 줄이 그대로 반영 */
+  const verOf = n => { const m = String(n).match(/v\s*(\d+(?:[._]\d+)*)/i); return m ? m[1].split(/[._]/).map(Number) : []; };
+  const cmpVer = (x, y) => { for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+  function surgMerge(list) {
+    // list: [{ data, file }] → 새 파일부터
+    list.sort((p, q) => cmpVer(verOf(q.file.name), verOf(p.file.name)) || (q.file.lastModified - p.file.lastModified));
+    const cover = [], rows = [], parts = [], cats = {}, doctors = [], sources = [];
+    const check = { cells: 0, bad: [], skipped: [], sheets: [] };
+    for (const { data, file } of list) {
+      let used = 0;
+      for (const r of data.rows) { if (cover.some(c => r.d >= c[0] && r.d <= c[1])) continue; rows.push(r); used++; }
+      cover.push([data.first, data.last]);
+      data.parts.forEach(x => { if (!parts.includes(x)) parts.push(x); }); Object.assign(cats, Object.assign({}, data.cats, cats));
+      data.doctors.forEach(x => { if (!doctors.includes(x)) doctors.push(x); });
+      if (used) { check.cells += data.check.cells; check.bad.push(...data.check.bad.map(b => Object.assign({ file: file.name }, b))); check.sheets.push(...data.check.sheets.map(s => [`${file.name.replace(/\.xls[xm]?$/i, '')} ${s[0]}`, s[1]]));
+      if (data.check.baseMonth && !check.baseMonth) check.baseMonth = data.check.baseMonth;
+      if (!data.check.cells) check.skipped.push(`${file.name}: 엑셀 요약표 계산값이 없어 대조 못 함`); }
+      sources.push({ name: file.name, lastModified: file.lastModified, size: file.size, first: data.first, last: data.last, used });
     }
-    const up = await surgSave(data);
-    return { ok: true, up, summary };
+    rows.sort((p, q) => p.d < q.d ? -1 : p.d > q.d ? 1 : doctors.indexOf(p.doc) - doctors.indexOf(q.doc));
+    return { v: 1, parts, cats, doctors, rows, first: rows.length ? rows[0].d : null, last: rows.length ? rows[rows.length - 1].d : null, check, sources, source: sources[0] ? { name: (sources[0].name.replace(/\.xls[xm]?$/i, '')) + (sources.length > 1 ? ` 외 ${sources.length - 1}개` : ''), lastModified: sources[0].lastModified, size: sources[0].size } : null };
   }
+  async function surgReadFiles(files) {
+    const ok = [], skipped = [], warnings = [], notes = [];
+    for (const f of files) {
+      let wb; try { wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }); } catch (e) { skipped.push(`${f.name}: 읽지 못했어요 (${e.name === 'NotReadableError' ? '다른 PC에서 열려 있거나 NAS 연결이 끊김' : e.message})`); continue; }
+      if (!SG.isSurgeryWorkbook(wb)) { skipped.push(`${f.name}: 수술 DB 모양(날짜·원장·부위 칸)이 아니라서 건너뜀`); continue; }
+      const res = SG.parseSurgeryWorkbook(XLSX, wb, {});
+      if (res.errors && res.errors.length) { skipped.push(`${f.name}: ${res.errors.join(' · ')}`); continue; }
+      ok.push({ data: res.data, file: f });
+      warnings.push(...res.warnings.map(w => `${f.name}: ${w}`)); notes.push(...res.notes.map(w => `${f.name}: ${w}`));
+    }
+    return { ok, skipped, warnings, notes };
+  }
+  async function surgListFiles(h) {
+    if (h.kind === 'file') return [{ h, f: await h.getFile() }];
+    const out = [];
+    async function walk(dir, depth) {
+      for await (const [name, e] of dir.entries()) {
+        if (e.kind === 'directory') { if (depth < 2 && !/^(backup|백업|old|이전)$/i.test(name)) await walk(e, depth + 1); continue; }
+        if (/\.html?$/i.test(name) && !name.startsWith('.')) { (S._repFound = S._repFound || []).push(await e.getFile()); continue; }
+        if (!/\.xls[xm]$/i.test(name) || name.startsWith('~$') || name.startsWith('.')) continue;
+        out.push({ h: e, f: await e.getFile() });
+      }
+    }
+    await walk(h, 0); return out;
+  }
+  const surgSig = files => files.map(x => `${x.f.name}:${x.f.lastModified}:${x.f.size}`).sort().join('|');
   async function surgSync(opts = {}) {
-    if (S.source === 'cloud' || !S.surgHandle || S.surgBusy) return;
+    const hs = (S.surgSrc || []).filter(Boolean);
+    if (S.source === 'cloud' || !hs.length) return;
+    if (S.surgBusy && !opts.force) return;
     if (!opts.force && !syncOn()) return;
     S.surgBusy = true;
     try {
-      const h = S.surgHandle;
-      let perm = 'denied'; try { perm = await h.queryPermission({ mode: 'read' }); } catch (e) { }
-      if (perm !== 'granted' && opts.force) { try { perm = await h.requestPermission({ mode: 'read' }); } catch (e) { } }
-      if (perm !== 'granted') { S.surgNeedPerm = true; return; }
-      S.surgNeedPerm = false;
-      let f; try { f = await h.getFile(); } catch (e) { S.surgIssue = { msg: `수술 DB(${h.name})를 읽지 못했어요 (${e.name}) — 다음 확인 때 다시 시도` }; return; }
-      const src = S.surg && S.surg.source;
-      if (!opts.force && src && src.lastModified === f.lastModified && src.size === f.size) { if (surgPendingGet()) await surgUpload(); return; }
-      if (!opts.force && S.surgHeld && S.surgHeld.data.source && S.surgHeld.data.source.lastModified === f.lastModified) return;   // 이미 멈춘 같은 파일
-      const r = await surgImport(f, { preview: opts.preview });
-      if (r.ok && !opts.preview) toast(`⟳ 수술 DB 반영${r.up ? ' · 폰에도 반영' : ''}`, 5000);
-      else if (r.held) toast('수술 DB: 엑셀 요약표와 다른 칸이 있어 저장을 멈췄어요. 수술 통계 화면에서 확인해주세요', 7000);
-    } finally { S.surgBusy = false; if (['surgery', 'input'].includes(S.view)) render(); }
+      const files = []; S.surgNeedPerm = false; S._repFound = [];
+      for (const h of hs) {
+        let perm = 'denied'; try { perm = await h.queryPermission({ mode: 'read' }); } catch (e) { }
+        if (perm !== 'granted' && opts.force) { try { perm = await h.requestPermission({ mode: 'read' }); } catch (e) { } }
+        if (perm !== 'granted') { S.surgNeedPerm = true; continue; }
+        try { files.push(...await surgListFiles(h)); } catch (e) { S.surgIssue = { msg: `수술 DB(${h.name})를 읽지 못했어요 (${e.name}) — NAS 연결을 확인해주세요` }; }
+      }
+      // 폴더에 있는 월간 리포트(HTML)는 새것만 자동으로 올림
+      if (S._repFound.length) { const known = (S.surgRep && S.surgRep.list) || []; const fresh = S._repFound.filter(f => !known.some(x => x.name === f.name && x.lastModified === f.lastModified)); if (fresh.length) { const rr = await repSave(fresh); if (rr.done.length) toast(`월간 리포트 ${rr.done.map(m => +m.slice(5) + '월').join(', ')} 자동으로 올림`, 5000); } }
+      if (!files.length) { if (opts.force && !S.surgNeedPerm) toast('연결한 곳에 엑셀 파일이 없어요', 5000); return; }
+      const sig = surgSig(files);
+      if (!opts.force && S.surg && S.surg.sig === sig) { if (surgPendingGet()) await surgUpload(); return; }
+      if (!opts.force && S.surgHeld && S.surgHeld.data.sig === sig) return;   // 이미 멈춘 같은 파일들
+      const rd = await surgReadFiles(files.map(x => x.f));
+      if (!rd.ok.length) { S.surgIssue = { msg: '수술 DB로 읽을 수 있는 파일이 없어요', list: rd.skipped }; if (opts.force) toast('수술 DB로 읽을 수 있는 파일이 없어요', 6000); return; }
+      const data = surgMerge(rd.ok); data.sig = sig;
+      data.warnings = rd.warnings.slice(0, 80); data.notes = rd.notes.concat(rd.skipped).slice(0, 40);
+      const tot = SG.aggregate(data, data.first, data.last);
+      const items = data.sources.map(s => `${s.name} · ${md(s.first)}~${md(s.last)}${data.sources.length > 1 ? (s.used ? ` · ${nf(s.used)}줄 사용` : ' · 더 새 파일과 겹쳐서 안 씀') : ''}`)
+        .concat([`합계 ${md(data.first)}~${md(data.last)} · 수술 부위 ${nf(tot.total)}건`, `원장별 ${data.doctors.filter(d => tot.docs[d]).map(d => `${d} ${nf(tot.docs[d].total)}`).join(' · ')}`,
+          data.check.cells ? (data.check.bad.length ? `엑셀 요약표와 다른 칸 ${data.check.bad.length}개` : `엑셀 요약표 ${nf(data.check.cells)}칸과 모두 일치`) : '엑셀 요약표 계산값이 없어 대조 못 함'])
+        .concat(data.check.skipped.length && data.check.cells ? [`요약표 대조 못 한 파일 ${data.check.skipped.length}개`] : [])
+        .concat(rd.skipped.length ? [`건너뛴 파일 ${rd.skipped.length}개 (수술 DB가 아님)`] : []);
+      if (data.check.bad.length && !opts.forceSave) {
+        S.surgHeld = { data, summary: items }; S.surgIssue = { msg: `엑셀 요약표와 다른 칸이 ${data.check.bad.length}개 있어서 저장을 멈췄어요`, bad: data.check.bad };
+        toast('수술 DB: 엑셀 요약표와 다른 칸이 있어 저장을 멈췄어요. 수술 통계 화면에서 확인해주세요', 7000); return;
+      }
+      if (opts.preview) {
+        // 확인 창은 기다리지 않음 (닫거나 다른 창이 떠도 멈추지 않게)
+        showUpdated({ title: '수술 DB 확인', sub: `파일 ${data.sources.length}개`, items, ok: '저장하기', cancel: '취소', check: false,
+          onOk: async () => { const up = await surgSave(data); toast(`수술 DB 저장 완료 · ~${md(data.last)}${up ? ' · 폰에도 반영' : ''}`, 5000); render(); },
+          onClose: () => toast('저장하지 않았어요 — 수술 통계의 "지금 확인"을 누르면 다시 볼 수 있어요', 5000) });
+        return;
+      }
+      const up = await surgSave(data);
+      toast(`⟳ 수술 DB 반영 · ~${md(data.last)}${up ? ' · 폰에도 반영' : ''}`, 5000);
+    } catch (e) { console.error(e); S.surgIssue = { msg: '수술 DB 확인 중 오류: ' + e.message }; }
+    finally { S.surgBusy = false; if (['surgery', 'input'].includes(S.view)) render(); }
   }
-  async function surgConnect() {
+  async function surgSaveSrc() { try { await IWStore.setSource('sx', S.surgSrc); } catch (e) { toast('연결 정보를 이 브라우저에 저장하지 못했어요: ' + e.message, 6000); } }
+  async function surgAddFiles() {
     try {
-      const [h] = await window.showOpenFilePicker({ id: 'iw-src-sx', multiple: false, types: [{ description: '엑셀', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] } }] });
-      S.surgHandle = h; await IWStore.setSource('sx', h);
+      const hs = await window.showOpenFilePicker({ id: 'iw-src-sx', multiple: true, types: [{ description: '엑셀', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] } }] });
+      S.surgSrc = (S.surgSrc || []).filter(x => !hs.some(h => h.name === x.name && x.kind === 'file')).concat(hs); await surgSaveSrc();
       await surgSync({ force: true, preview: true });
-    } catch (e) { if (e.name !== 'AbortError') showFsError(e, 'read', '수술 DB 연결 실패'); }
+    } catch (e) { if (e.name !== 'AbortError') showFsError(e, 'read', '수술 DB 파일 추가 실패'); }
   }
+  async function surgAddFolder() {
+    try {
+      const h = await window.showDirectoryPicker({ id: 'iw-src-sxd', mode: 'read' });
+      S.surgSrc = (S.surgSrc || []).filter(x => !(x.kind === 'directory' && x.name === h.name)).concat([h]); await surgSaveSrc();
+      await surgSync({ force: true, preview: true });
+    } catch (e) { if (e.name !== 'AbortError') showFsError(e, 'read', '수술 DB 폴더 연결 실패'); }
+  }
+  async function surgRemoveSrc(i) { S.surgSrc.splice(i, 1); await surgSaveSrc(); S.surgHeld = null; S.surgIssue = null; if (S.surgSrc.length) await surgSync({ force: true, preview: true }); else render(); }
   /* 다른 PC가 올린 수술 DB가 더 새것이면 받기 */
   async function surgFromCloud() {
     if (!IWCloud.enabled() || !IWCloud.signedIn()) return false;
     try { await surgCalLoad(); } catch (e) { }
+    try { await repIndex(); } catch (e) { }
     let c; try { c = await surgPullCloud(); } catch (e) { return false; }
     if (!c || !c.savedAt) return false;
     if (S.source === 'cloud') { S.surg = c; await IWStore.setKV('surgCloud', c); return true; }
@@ -2861,7 +3219,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const pspan = M.partial ? ` 같은 기간(${md(pp.start)}~${md(M.pEnd)})` : '';
 
     if (!cur.total) {
-      $('#surgBody').innerHTML = `<div class="card"><div class="empty"><b>${esc(p.label)} 수술 데이터가 없어요</b>엑셀에는 ${md(D.first)} ~ ${md(D.last)}까지 들어 있어요.</div></div>`;
+      $('#surgBody').innerHTML = `<div class="card"><div class="empty"><b>${esc(p.label)} 수술 데이터가 없어요</b>엑셀에는 ${md(D.first)} ~ ${md(D.last)}까지 들어 있어요.</div></div>${repCardHtml(null, pc)}`;
       return;
     }
 
@@ -2968,7 +3326,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       ${tableView(['주차', '기간', '건수', '영업일', '일평균', '휴진'], pw.concat(cw).map(x => [x.w.label, `${md(x.w.start)}~${md(x.w.end)}`, x.v, x.biz + '일' + (x.part ? ` (입력 ${x.bizIn}일)` : ''), x.avg == null ? '–' : x.avg, x.cl.map(md).join(', ')]))}
     </div>
 
-    <div class="card" style="margin-top:16px"><h3>부위별 수술건수 TOP 10</h3>
+    <div class="card" style="margin-top:16px"><h3>부위별 TOP 10</h3>
       <div class="legend" style="margin:-4px 0 10px"><span><i style="background:var(--accent)"></i>${mN}</span>${hasPrev ? `<span><i style="background:var(--prevc)"></i>${pN}</span>` : ''}<span><b style="color:var(--brand)">빨간 이름</b> = 메인 부위</span></div>
       ${pairRows(top10.map((r, i) => ({ name: pName(r.x), sub: `${i + 1}위 · ${f1(pctS(r.a, cur.total))}%`, a: r.a, b: r.b, main: SG.groupOf(SURG_GROUPS, D.cats, r.x) === 'main', tip: docs.filter(d => cur.docs[d] && cur.docs[d].parts[r.x]).map(d => `${esc(d)} ${cur.docs[d].parts[r.x]}`).join(' · ') })), { cur: mN, prev: pN, hasPrev })}
       <div class="others"><div class="small" style="font-weight:700;margin:14px 0 6px">TOP10 외 부위 <span class="muted" style="font-weight:500">${mN} 건수${hasPrev ? ` (${pN})` : ''}</span></div>
@@ -2983,7 +3341,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       ${readList(ptRead)}
     </div>
 
-    <div class="card" style="margin-top:16px"><h3>원장별 총 수술건수</h3>
+    <div class="card" style="margin-top:16px"><h3>원장별 수술 건수</h3>
       <div class="legend" style="margin:-4px 0 10px"><span><i style="background:var(--accent)"></i>${mN}</span>${hasPrev ? `<span><i style="background:var(--prevc)"></i>${pN}</span>` : ''}</div>
       ${pairRows(drows.map(r => ({ name: r.d, sub: `${r.sh}% · 진료일당 ${r.per}건`, a: r.a, b: r.b })), { cur: mN, prev: pN, hasPrev })}
       ${readList(dRead)}
@@ -2993,6 +3351,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="tablewrap"><table class="heat"><tr><th></th>${hcols.map(c => `<th>${esc(pName(c))}</th>`).join('')}<th>합계</th></tr>${docs.filter(d => cur.docs[d]).map(d => `<tr><th class="rh">${esc(d)}</th>${hcols.map(c => { const v = cur.docs[d].parts[c] || 0, a = v / mx; return `<td style="background:${v ? `color-mix(in srgb, var(--accent) ${Math.round(12 + a * 78)}%, transparent)` : 'var(--chip)'};color:${a > .55 ? '#fff' : 'var(--ink)'}">${v || ''}</td>`; }).join('')}<td><b>${cur.docs[d].total}</b></td></tr>`).join('')}</table></div>
     </div>
 
+    ${repCardHtml(M, pc)}
     <div class="card" style="margin-top:16px"><h3>집계 기준${pc ? '<button class="btn sm right" id="sgCal">기준 수정</button>' : ''}</h3>
       ${zero.length || closedWork.length ? `<div class="warnbox" style="margin-bottom:10px">${zero.length ? `<b>수술이 0건인 영업일 ${zero.map(mdw).join(', ')}</b> — 휴진이었다면 '기준 수정'에서 휴진일로 넣어야 영업일·일평균이 맞아요.` : ''}${closedWork.length ? `${zero.length ? '<br>' : ''}<b>휴진일인데 수술이 있는 날 ${closedWork.map(d => `${mdw(d)} ${cur.byDate[d]}건`).join(', ')}</b> — 휴진일 목록을 확인해주세요.` : ''}</div>` : ''}
       <ul class="small" style="margin:0;padding-left:18px;line-height:1.8">
@@ -3004,7 +3363,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <li>휴진일·휴무 기준은 홍보팀 9·10월 리포트에 적힌 날짜로 시작했어요. 새 휴진일은 '기준 수정'에서 넣어주세요${S.surgCal && S.surgCal.savedAt ? ` (마지막 수정 ${esc(fmtWhen(S.surgCal.savedAt))})` : ''}.</li>
       </ul>
     </div>
-    ${surgCheckCard(D)}`;
+    ${surgCheckCard(D)}
+    ${pc ? `<div id="sgSrcCard">${surgInputCard()}</div>` : ''}`;
   }
 
   function openSurgCal() {
@@ -3037,6 +3397,99 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     };
   }
 
+  /* ---------- 팀장님 월간 수술 리포트(HTML) 보관함 ----------
+     - 올린 리포트는 스크립트를 빼고 저장(보기 전용), 클라우드에 달별로 1개씩 → 폰에서도 보임
+     - 리포트 첫머리 숫자(총 건수·영업일·일평균)를 앱 계산과 맞춰봄 */
+  function repParse(html, name) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const txt = s => (s || '').replace(/\s+/g, ' ').trim();
+    const eb = txt((doc.querySelector('.eyebrow') || {}).textContent);
+    let m = eb.match(/(20\d{2})\.(\d{1,2})\.\d{1,2}/) || txt(doc.title + ' ' + (doc.querySelector('h1') || {}).textContent).match(/(20\d{2})년\s*(\d{1,2})월/);
+    let month = m ? `${m[1]}-${String(+m[2]).padStart(2, '0')}` : null;
+    if (!month) { const t = txt(doc.title + ' ' + name).match(/(\d{1,2})월/); if (t) month = `${new Date().getFullYear()}-${String(+t[1]).padStart(2, '0')}`; }
+    const kpi = {};
+    doc.querySelectorAll('.kpi').forEach(k => {
+      const lab = txt((k.querySelector('.k-label') || {}).textContent), v = parseFloat(txt((k.querySelector('.k-val') || {}).textContent).replace(/,/g, ''));
+      if (isNaN(v)) return;
+      if (/총.*건수/.test(lab)) kpi.total = v; else if (/일평균/.test(lab)) kpi.avg = v; else if (/영업일수/.test(lab)) kpi.biz = v; else if (/비중/.test(lab)) kpi.share = v;
+    });
+    doc.querySelectorAll('script').forEach(s => s.remove());
+    doc.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+    const clean = '<!doctype html>' + doc.documentElement.outerHTML;
+    return { month, kpi, html: clean, title: txt(doc.title) || name };
+  }
+  async function repIndex() {
+    let idx = null;
+    if (IWCloud.enabled() && IWCloud.signedIn()) { try { const d = await IWCloud.req('GET', '/config/surgrep_index'); if (d && d.fields && d.fields.json) idx = JSON.parse(d.fields.json.stringValue); } catch (e) { } }
+    if (idx) { await IWStore.setKV('surgrepIdx', idx); } else idx = await IWStore.getKV('surgrepIdx');
+    S.surgRep = idx || { list: [] }; return S.surgRep;
+  }
+  async function repGet(month) {
+    const loc = await IWStore.getKV('surgrep_' + month);
+    const meta = (S.surgRep && S.surgRep.list || []).find(x => x.month === month);
+    if (loc && (!meta || loc.savedAt >= meta.savedAt)) return loc;
+    if (IWCloud.enabled() && IWCloud.signedIn()) { try { const d = await IWCloud.req('GET', '/config/surgrep_' + month); if (d && d.fields && d.fields.json) { const r = JSON.parse(d.fields.json.stringValue); await IWStore.setKV('surgrep_' + month, r); return r; } } catch (e) { } }
+    return loc || null;
+  }
+  async function repSave(files) {
+    const done = [], bad = [];
+    for (const f of files) {
+      let p; try { p = repParse(await f.text(), f.name); } catch (e) { bad.push(`${f.name}: 읽지 못했어요`); continue; }
+      if (!p.month) { bad.push(`${f.name}: 몇 월 리포트인지 찾지 못했어요 (제목에 '2026년 10월'이나 '2026.10.01'이 있어야 해요)`); continue; }
+      if (p.html.length > 900000) { bad.push(`${f.name}: 파일이 너무 커요 (900KB 이하만)`); continue; }
+      try { await IWCloud.checkQuiet(); } catch (e) { }
+      const rec = { month: p.month, name: f.name, title: p.title, kpi: p.kpi, html: p.html, savedAt: new Date().toISOString(), savedBy: IWCloud.quiet ? '' : (IWCloud.signedIn() ? IWCloud.email() : ''), lastModified: f.lastModified };
+      await IWStore.setKV('surgrep_' + p.month, rec);
+      const idx = S.surgRep || { list: [] }; idx.list = idx.list.filter(x => x.month !== p.month).concat([{ month: p.month, name: f.name, savedAt: rec.savedAt, kpi: p.kpi, lastModified: f.lastModified }]).sort((x, y) => x.month < y.month ? 1 : -1);
+      S.surgRep = idx; await IWStore.setKV('surgrepIdx', idx);
+      if (IWCloud.enabled() && IWCloud.signedIn()) {
+        try {
+          await IWCloud.req('PATCH', '/config/surgrep_' + p.month, { fields: { json: { stringValue: JSON.stringify(rec) }, updatedAt: { timestampValue: rec.savedAt } } });
+          await IWCloud.req('PATCH', '/config/surgrep_index', { fields: { json: { stringValue: JSON.stringify(idx) }, updatedAt: { timestampValue: rec.savedAt } } });
+        } catch (e) { bad.push(`${f.name}: 이 PC엔 저장됐지만 폰 반영 실패 (${e.message})`); }
+      }
+      done.push(p.month);
+    }
+    if (done.length) { try { S.dataVersion = await IWCloud.bumpMeta(`수술 월간 리포트 ${done.map(m => +m.slice(5) + '월').join(', ')}`); } catch (e) { } IWCloud.logActivity('수술 리포트', done.join(', ')); }
+    return { done, bad };
+  }
+  function repCompare(kpi, M) {
+    // M = surgMonth 결과. 리포트 숫자와 앱 계산을 나란히
+    if (!kpi || !M || M.partial) return null;
+    const rows = [];
+    const app = { total: M.cur.total, biz: M.biz.length, avg: M.biz.length ? Math.round(M.cur.total / M.biz.length * 10) / 10 : null };
+    if (kpi.total != null) rows.push(['총 수술건수', kpi.total, app.total]);
+    if (kpi.biz != null) rows.push(['영업일수', kpi.biz, app.biz]);
+    if (kpi.avg != null && app.avg != null) rows.push(['영업일 일평균', kpi.avg, app.avg]);
+    return rows.length ? rows.map(([l, r, x]) => ({ l, r, x, ok: Math.abs(r - x) < 0.05 })) : null;
+  }
+  async function repOpen(month) {
+    const r = await repGet(month);
+    if (!r) return toast('이 리포트를 불러오지 못했어요 (인터넷 연결 확인)', 5000);
+    const el = document.createElement('div'); el.className = 'repview'; el.setAttribute('role', 'dialog');
+    el.innerHTML = `<div class="rv-bar"><b>${esc(r.title || r.name)}</b><span class="muted small">${esc(r.name)} · 올림 ${esc(fmtWhen(r.savedAt))}${r.savedBy ? ' · ' + esc(r.savedBy) : ''}</span><button class="btn sm" id="rvClose">닫기</button></div><iframe sandbox="" title="월간 리포트"></iframe>`;
+    document.body.appendChild(el); el.querySelector('iframe').srcdoc = r.html;
+    requestAnimationFrame(() => el.classList.add('show'));
+    const close = () => { el.classList.remove('show'); setTimeout(() => el.remove(), 250); document.removeEventListener('keydown', k); };
+    const k = e => { if (e.key === 'Escape') close(); }; document.addEventListener('keydown', k);
+    el.querySelector('#rvClose').onclick = close;
+  }
+  function repCardHtml(M, pc) {
+    const list = (S.surgRep && S.surgRep.list) || [], month = M ? M.p.start.slice(0, 7) : null, cur = list.find(x => x.month === month);
+    const cmp = cur ? repCompare(cur.kpi, M) : null;
+    return `<div class="card" style="margin-top:16px"><h3>월간 수술 리포트 <span class="muted small" style="font-weight:500">홍보팀</span>${pc ? '<button class="btn sm right" id="repUp">리포트 올리기</button><input type="file" id="repFile" accept=".html,.htm,text/html" multiple class="hide">' : ''}</h3>
+      ${cur ? `<div class="row" style="gap:10px;flex-wrap:wrap"><button class="upd-go" data-rep="${cur.month}"><span>${+cur.month.slice(5)}월 리포트 보기</span></button><span class="small muted">${esc(cur.name)} · ${esc(fmtWhen(cur.savedAt))}</span></div>
+        ${cmp ? `<div class="repcmp">${cmp.map(c => `<span class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '!'} ${esc(c.l)} 리포트 ${c.r} · 앱 ${c.x}</span>`).join('')}</div>${cmp.some(c => !c.ok) ? `<div class="warnbox" style="margin-top:8px">리포트와 앱 숫자가 달라요. 연결된 수술 DB가 리포트와 같은 버전인지, 휴진일 기준이 같은지 확인해주세요.</div>` : ''}` : M && M.partial ? `<div class="small muted" style="margin-top:6px">앱의 수술 DB가 이 달을 다 담고 있지 않아서(~${md(M.end)}) 숫자 대조는 건너뛰었어요.</div>` : ''}`
+        : `<p class="small muted" style="margin:4px 0 8px">${month ? `${+month.slice(5)}월 리포트가 아직 없어요. ` : ''}${pc ? '팀장님이 만든 월간 리포트(HTML 파일)를 올리면 여기서 원장님 폰까지 같이 볼 수 있어요.' : 'PC에서 올리면 여기서 볼 수 있어요.'}</p>`}
+      ${list.filter(x => x.month !== month).length ? `<div class="replist">${list.filter(x => x.month !== month).map(x => `<button class="btn sm ghost" data-rep="${x.month}">${x.month.slice(0, 4)}년 ${+x.month.slice(5)}월</button>`).join('')}</div>` : ''}
+    </div>`;
+  }
+  function bindRep() {
+    document.querySelectorAll('[data-rep]').forEach(b => b.onclick = () => repOpen(b.dataset.rep));
+    const up = $('#repUp'), fi = $('#repFile');
+    if (up && fi) { up.onclick = () => fi.click(); fi.onchange = async e => { const fs = [...e.target.files]; e.target.value = ''; if (!fs.length) return; const r = await repSave(fs); if (r.done.length) toast(`월간 리포트 ${r.done.map(m => +m.slice(5) + '월').join(', ')} 올림${IWCloud.signedIn() ? ' · 폰에도 반영' : ''}`, 5000); if (r.bad.length) toast(r.bad.join(' / '), 8000); render(); }; }
+  }
+
   function surgSeries(type, p, n) {
     const out = []; let q = p;
     for (let i = 0; i < n; i++) { if (S.surg.first && q.end < S.surg.first) break; out.unshift(q); q = SG.shift(q, -1); }
@@ -3045,11 +3498,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   function renderSurgery() {
     setAccent('sx'); CHARTS = {};
     const D = S.surg, pc = S.source !== 'cloud' && !isViewDevice();
-    const connectBtn = pc ? `<button class="btn sm ${S.surgHandle ? '' : 'primary'}" id="sgConnect">${S.surgHandle ? '파일 바꾸기' : '수술 DB 파일 연결'}</button>${S.surgHandle ? `<button class="btn sm" id="sgNow">지금 확인</button>` : ''}` : '';
+    const hasSrc = (S.surgSrc || []).length;
+    const connectBtn = pc ? `<button class="btn sm ${hasSrc ? '' : 'primary'}" id="sgGoSrc">${hasSrc ? `수술 DB 파일 ${hasSrc}곳` : '수술 DB 연결'}</button>${hasSrc ? `<button class="btn sm" id="sgNow">지금 확인</button>` : ''}` : '';
     const issue = surgIssueHtml();
     if (!D || !D.rows || !D.rows.length) {
       $('#main').innerHTML = `<div class="topbar"><h1><small>Surgery</small>수술 통계</h1><div class="row">${connectBtn}</div></div>${issue}
-        <div class="card"><div class="empty"><b>아직 수술 DB가 없어요</b>${pc ? '홍보팀 팀장님이 정리하는 <b>수술 DB 엑셀</b>(일별통계 시트가 있는 파일)을 <b>수술 DB 파일 연결</b>로 한 번 연결해두면, 파일이 바뀔 때마다 자동으로 반영돼요.' : 'PC에서 수술 DB를 올리면 여기에 보여요.'}</div></div>`;
+        <div class="card"><div class="empty"><b>아직 수술 DB가 없어요</b>${pc ? '홍보팀 팀장님이 정리하는 <b>수술 DB 엑셀</b>을 연결해두면, 파일이 바뀌거나 새 버전이 생길 때마다 자동으로 반영돼요.' : 'PC에서 수술 DB를 올리면 여기에 보여요.'}</div></div>${pc ? surgInputCard() : ''}`;
       bindSurgery(); return;
     }
     const type = S.surgP === 'week' ? 'week' : 'month';
@@ -3063,7 +3517,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     if (type === 'month') {
       $('#main').innerHTML = topbar + issue + '<div id="surgBody"></div>';
       try { renderSurgReport(D); } catch (e) { console.error(e); $('#surgBody').innerHTML = `<div class="badbox">리포트 계산 오류: ${esc(e.message)}</div>`; }
-      drawCharts(); bindSurgery(p); const sc = $('#sgCal'); if (sc) sc.onclick = openSurgCal; return;
+      drawCharts(); bindSurgery(p); bindRep(); const sc = $('#sgCal'); if (sc) sc.onclick = openSurgCal; return;
     }
     const cur = SG.aggregate(D, p.start, p.end), cmp = SG.fairPrev(D, p), prev = cmp.prev, pv = prev.total > 0 || cmp.pp.end >= D.first;
     const ptName = type === 'week' ? '주' : '달', cmpName = `이전 ${ptName}${cmp.partial ? ' 같은 기간' : ''}`;
@@ -3143,27 +3597,31 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div style="margin-top:16px">${trend}</div>
     <div class="grid g2" style="margin-top:16px;align-items:start"><div style="display:grid;gap:16px;min-width:0">${docCard}<div class="card"><h3>원장 × 부위 · ${esc(p.label)}</h3>${heat}</div></div>${partCard}</div>
     ${wkTable}
-    ${surgCheckCard(D)}`;
+    ${surgCheckCard(D)}
+    ${pc ? `<div id="sgSrcCard">${surgInputCard()}</div>` : ''}`;
     drawCharts(); bindSurgery(p);
   }
   function surgIssueHtml() {
     const I = S.surgIssue; let h = '';
     if (S.surgNeedPerm && S.source !== 'cloud') h += `<div class="warnbox" style="margin-bottom:12px">수술 DB 파일 읽기 허용이 필요해요. <b>지금 확인</b>을 눌러 허용해주세요.</div>`;
     if (!I) return h;
-    return h + `<div class="badbox" style="margin-bottom:12px"><b>${esc(I.msg)}</b>${I.bad ? `<ul style="margin:6px 0 0;padding-left:18px">${I.bad.slice(0, 12).map(b => `<li>${esc(b.sheet)} · ${esc(b.where)}: 엑셀 ${esc(b.excel)} / 앱 ${esc(b.app)}</li>`).join('')}${I.bad.length > 12 ? `<li>…외 ${I.bad.length - 12}칸</li>` : ''}</ul>
+    return h + `<div class="badbox" style="margin-bottom:12px"><b>${esc(I.msg)}</b>${I.list ? `<ul style="margin:6px 0 0;padding-left:18px">${I.list.slice(0, 8).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${I.bad ? `<ul style="margin:6px 0 0;padding-left:18px">${I.bad.slice(0, 12).map(b => `<li>${b.file ? esc(b.file) + ' · ' : ''}${esc(b.sheet)} · ${esc(b.where)}: 엑셀 ${esc(b.excel)} / 앱 ${esc(b.app)}</li>`).join('')}${I.bad.length > 12 ? `<li>…외 ${I.bad.length - 12}칸</li>` : ''}</ul>
       <div class="small" style="margin-top:8px">앱 숫자는 일별통계 원본을 직접 더한 값이에요. 엑셀 요약표 수식 범위나 계산이 안 된 칸이 원인일 수 있어요. 홍보팀에 확인한 뒤 저장해주세요.</div>
       ${S.surgHeld && S.source !== 'cloud' ? `<div class="row" style="margin-top:8px"><button class="btn sm" id="sgForce">확인했어요 · 일별통계 기준으로 저장</button></div>` : ''}` : ''}</div>`;
   }
   function surgCheckCard(D) {
     const c = D.check || { cells: 0, bad: [], sheets: [], skipped: [] };
     const w = (D.warnings || []), n = (D.notes || []);
-    return `<div class="card" style="margin-top:16px"><h3>엑셀 요약표와 대조${c.cells ? `<span class="right tag ${c.bad.length ? 'bad' : 'ok'}">${c.bad.length ? `다른 칸 ${c.bad.length}개` : `${nf(c.cells)}칸 모두 일치`}</span>` : ''}</h3>
+    return `<div class="card" style="margin-top:16px"><h3>데이터 검증${c.cells ? `<span class="right tag ${c.bad.length ? 'bad' : 'ok'}">${c.bad.length ? `다른 칸 ${c.bad.length}개` : `${nf(c.cells)}칸 모두 일치`}</span>` : ''}</h3>
       <div class="small">${c.cells ? `엑셀의 ${c.sheets.map(s => `${esc(s[0])} ${nf(s[1])}칸`).join(' · ')}을 앱 계산과 한 칸씩 비교했어요${c.baseMonth ? ` (월간통계·원장별통계는 엑셀 기준월 ${esc(c.baseMonth)})` : ''}.` : esc((c.skipped || []).join(' '))}</div>
-      ${w.length || n.length ? `<details style="margin-top:8px"><summary>확인할 것 ${w.length + n.length}개</summary><ul>${w.concat(n).map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>` : '<div class="small up" style="margin-top:6px">원본에 이상한 칸 없음</div>'}</div>`;
+      ${w.length || n.length ? `<details style="margin-top:8px"><summary>검토 항목 ${w.length + n.length}개</summary><ul>${w.concat(n).map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>` : '<div class="small up" style="margin-top:6px">원본에 이상한 칸 없음</div>'}</div>`;
   }
   function bindSurgery(p) {
-    const c = $('#sgConnect'); if (c) c.onclick = surgConnect;
-    const nw = $('#sgNow'); if (nw) nw.onclick = () => surgSync({ force: true });
+    const af = $('#sgAddFile'); if (af) af.onclick = surgAddFiles;
+    const ad = $('#sgAddDir'); if (ad) ad.onclick = surgAddFolder;
+    document.querySelectorAll('#sgNow, #sgNow2').forEach(b => b.onclick = () => surgSync({ force: true, preview: true }));
+    document.querySelectorAll('[data-sgrm]').forEach(b => b.onclick = () => surgRemoveSrc(+b.dataset.sgrm));
+    const gs = $('#sgGoSrc'); if (gs) gs.onclick = () => { const el = $('#sgSrcCard') || $('#sgAddFile'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     const fz = $('#sgForce'); if (fz) fz.onclick = async () => { const H = S.surgHeld; if (!H) return; const up = await surgSave(H.data); toast(`수술 DB 저장 완료${up ? ' · 폰에도 반영' : ''}`, 5000); render(); };
     if (!p) return;
     bindSeg('sgp', t => { S.surgP = t; render(); });
@@ -3172,16 +3630,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     $('#sgLast').onclick = () => { S.surgAnchor = S.surg.last; render(); };
   }
   function surgInputCard() {
-    const h = S.surgHandle, D = S.surg;
-    return `<div class="card" style="margin-top:16px"><h3>수술 DB <span class="muted small" style="font-weight:500">홍보팀 팀장님 정리 엑셀</span></h3>
-      <div class="row" style="margin:8px 0"><span class="tag kr" style="min-width:70px;justify-content:center">수술</span>
-        <span class="small" style="flex:1">${h ? `<b>${esc(h.name)}</b> <span class="muted">파일 연결됨${D ? ` · ${md(D.first)}~${md(D.last)} 저장됨` : ''}</span>` : '<span class="muted">수술 DB 엑셀(일별통계 시트가 있는 파일)을 연결하세요 — 바뀔 때마다 자동으로 반영돼요</span>'}</span>
-        <button class="btn sm ${h ? '' : 'primary'}" id="sgConnect">${h ? '바꾸기' : '파일 연결'}</button>${h ? '<button class="btn sm" id="sgNow">지금 확인</button>' : ''}</div>
+    const src = S.surgSrc || [], D = S.surg;
+    const used = n => D && D.sources ? D.sources.find(s => s.name === n) : null;
+    return `<div class="card" style="margin-top:16px"><h3>수술 DB <span class="muted small" style="font-weight:500">홍보팀 엑셀 · 여러 파일·폴더 가능</span></h3>
+      ${src.length ? `<div class="srcl">${src.map((h, i) => { const u = h.kind === 'file' ? used(h.name) : null; return `<div class="row" style="margin:6px 0"><span class="tag kr" style="min-width:52px;justify-content:center">${h.kind === 'directory' ? '폴더' : '파일'}</span>
+        <span class="small" style="flex:1;min-width:0;word-break:break-all"><b>${esc(h.name)}</b>${u ? ` <span class="muted">· ${md(u.first)}~${md(u.last)}${u.used === 0 ? ' · 더 새 파일과 겹쳐서 안 씀' : ''}</span>` : h.kind === 'directory' ? ' <span class="muted">· 안의 수술 DB 엑셀을 모두 읽어요 (새 버전 자동)</span>' : ''}</span>
+        <button class="btn sm ghost" data-sgrm="${i}" title="연결 끊기">✕</button></div>`; }).join('')}</div>` : `<p class="muted small" style="margin:6px 0">수술 DB 엑셀을 연결하세요. 팀장님이 <b>v4.1, v4.2…처럼 새 이름으로 저장</b>하거나 월간 파일을 따로 올리면 <b>폴더 연결</b>이 편해요 — 폴더 안 수술 DB 엑셀을 모두 읽고, 같은 날짜는 더 새 파일 숫자를 써요.</p>`}
+      ${D && D.sources && D.sources.length ? `<div class="small muted" style="margin:4px 0 8px">저장된 수술 데이터: ${md(D.first)} ~ <b>${md(D.last)}</b> · 파일 ${D.sources.length}개에서</div>` : ''}
+      <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><button class="btn sm ${src.length ? '' : 'primary'}" id="sgAddDir">폴더 연결</button><button class="btn sm" id="sgAddFile">파일 추가 (여러 개 가능)</button>${src.length ? '<button class="btn sm" id="sgNow2">지금 확인</button>' : ''}</div>
       ${surgIssueHtml()}</div>`;
   }
 
   /* ======================= 데이터 입력 ======================= */
   const XLS_RE = /\.xls[xmb]?$/i;
+  /* 연결 원본: 권역마다 여러 개 (국내 = 주간 통합 + 원본 2개) */
+  const SRC = {
+    en: { region: 'en', label: '영어권 Daily DB', file: false },
+    kr: { region: 'kr', label: '국내 주간 통합', file: true },
+    krA: { region: 'kr', label: '국내 플랫폼 명부', file: true },
+    krB: { region: 'kr', label: '국내 전화·플친', file: true },
+    jp: { region: 'jp', label: '일본어권 Daily DB', file: false }
+  };
+  const srcRegion = k => (SRC[k] || {}).region || k, srcLabel = k => (SRC[k] || {}).label || (REGIONS[k] || {}).label || k;
   function isDataFile(name) { return XLS_RE.test(name) && !name.startsWith('~$') && !name.startsWith('.'); }
 
   async function addFiles(items, opts = {}) {
@@ -3268,14 +3738,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     }
     // 연결된 원본이 있으면 자동 업데이트와 같은 방식으로 지금 바로 확인
     for (const r of regions) { try { await ensureRead(S.srcHandles[r]); } catch (e) { } }
-    if (S.surgHandle) surgSync({ force: true });
+    if ((S.surgSrc || []).length) surgSync({ force: true });
     return autoSyncOnce({ force: true, report: true });
     const items = [];
     for (const r of regions) {
       const h = S.srcHandles[r];
-      try { if (!(await ensureRead(h))) { S.walkErrors.push(`${REGIONS[r].label} 폴더: 읽기 권한이 허용되지 않음`); continue; } }
-      catch (e) { const ex = IWStore.explainFsError(e, 'read'); S.walkErrors.push(`${REGIONS[r].label} 폴더(${h.name}): ${ex ? ex.why + ' → ' + ex.fix : e.name}`); continue; }
-      progressOpen('폴더를 읽는 중', `${REGIONS[r].label} · ${h.name}`);
+      try { if (!(await ensureRead(h))) { S.walkErrors.push(`${srcLabel(r)} 폴더: 읽기 권한이 허용되지 않음`); continue; } }
+      catch (e) { const ex = IWStore.explainFsError(e, 'read'); S.walkErrors.push(`${srcLabel(r)} 폴더(${h.name}): ${ex ? ex.why + ' → ' + ex.fix : e.name}`); continue; }
+      progressOpen('폴더를 읽는 중', `${srcLabel(r)} · ${h.name}`);
       const out = []; await walkHandle(h, h.name + '/', out, 0);
       out.forEach(o => o.region = r); items.push(...out);
     }
@@ -3317,12 +3787,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const geoMig = localStorage.getItem('iw_geo_mig') !== '1', ctKnown = ctGet();
     let unchanged = 0;
     try {
-      for (const [r, h] of srcs) {
+      for (const [sk, h] of srcs) {
+        const r = srcRegion(sk);
         let perm = 'denied'; try { perm = await h.queryPermission({ mode: 'read' }); } catch (e) { }
-        if (perm !== 'granted') { S.sync.needPerm.push(`${REGIONS[r].label} (${h.name})`); continue; }
+        if (perm !== 'granted') { S.sync.needPerm.push(`${srcLabel(sk)} (${h.name})`); continue; }
         const list = [];
         try { if (h.kind === 'file') list.push({ handle: h, path: h.name }); else await walkHandle(h, h.name + '/', list, 0); }
-        catch (e) { S.walkErrors.push(`${REGIONS[r].label} ${h.name}: 읽기 실패 (${e.name}) — NAS 연결을 확인하세요`); continue; }
+        catch (e) { S.walkErrors.push(`${srcLabel(sk)} ${h.name}: 읽기 실패 (${e.name}) — NAS 연결을 확인하세요`); continue; }
         for (const it of list) {
           let f; try { f = await it.handle.getFile(); } catch (e) { retry.push(it.path); S.walkErrors.push(`${it.path}: 읽기 실패 (${e.name}) — 다음 확인 때 다시 시도`); continue; }
           const sig = f.lastModified + ':' + f.size;
@@ -3332,8 +3803,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
           const again = geoMig && r === 'en' && /\.xls[xm]?$/i.test(it.path) && det.date && (!ex || !ex.geo || !ctKnown[det.date]);
           if (!opts.all && !again && seen[it.path] === sig) { unchanged++; continue; }
           if (!opts.all && !again && ex && ex.source && ex.source.lastModified === f.lastModified && ex.source.size === f.size) { seen[it.path] = sig; unchanged++; continue; }
-          found.push({ id: Math.random().toString(36).slice(2), file: f, path: it.path, region: r, regionGuess: h.kind === 'file', date: det.date, dates: det.dates, rangeLabel: det.rangeLabel, dateWarn: det.warnings, status: 'wait', include: true, sig, auto: true });
+          if (r === 'jp' && !det.date) { seen[it.path] = sig; continue; }   // 일본어권 폴더의 '복사본' 등 날짜 없는 파일은 조용히 건너뜀
+          found.push({ id: Math.random().toString(36).slice(2), file: f, path: it.path, srcKey: sk, region: r, regionGuess: h.kind === 'file' && sk === 'kr', date: det.date, dates: det.dates, rangeLabel: det.rangeLabel, dateWarn: det.warnings, status: 'wait', include: true, sig, auto: true });
         }
+      }
+      // 국내 원본 두 파일은 같은 날을 나눠 갖고 있어서 둘 중 하나만 바뀌어도 둘을 같이 읽어 하루치를 만듦
+      const krRaw = found.filter(x => x.srcKey === 'krA' || x.srcKey === 'krB');
+      if (krRaw.length) {
+        const keep = found.filter(x => !krRaw.includes(x)); found.length = 0; found.push(...keep);
+        found.push(Object.assign({}, krRaw[0], { id: Math.random().toString(36).slice(2), path: '국내 원본 DB', krPair: krRaw.map(x => ({ path: x.path, sig: x.sig, file: x.file, srcKey: x.srcKey })), date: null, dates: null, dateWarn: [] }));
       }
       let saved = [];
       const issues = [];
@@ -3341,6 +3819,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         if (opts.report) progressOpen('바뀐 파일 분석 중', `${found.length}개`);
         let i = 0;
         found.sort((p, q) => (p.date || '9') < (q.date || '9') ? -1 : (p.date || '9') > (q.date || '9') ? 1 : 0);   // 날짜 순서대로 (복사본 검사가 원본을 먼저 보도록)
+        S._batch = found;
         for (const x of found) {
           i++;
           try { await analyzeOne(x, []); } catch (e) { x.status = 'error'; x.error = '분석 중 오류: ' + e.message; }
@@ -3348,6 +3827,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         }
         // 주간 통합 파일은 숫자가 실제로 바뀐 날만 저장 (안 바뀐 날까지 다시 올리지 않게)
         const fp = r => JSON.stringify([r.parser === 'weekly-v1' ? 'w' : 'd', r.total, r.channels, r.parts, r.matrix, r.resv, r.resvCh, r.resvPt, r.cost, r.dateAsk, r.noPart, r.partExtra]);
+        await rerunKrRaw(found, []);
         for (const x of found) if (x.kind === 'weekly' && x.records) {
           x.records = x.records.filter(r => !S.records[r.key] || fp(S.records[r.key]) !== fp(r));
           if (!x.records.length && !(x.deletes || []).length) x.include = false;   // 바뀐 날 없음
@@ -3361,7 +3841,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         S.queue = found.filter(x => x.status === 'done' && x.include);
         if (S.queue.length) { const r = await saveQueue({ auto: true, keepView: !opts.report }); saved = r.saved || []; }
         // 잠깐 읽기 실패(다른 PC에서 저장 중 등)는 다음에 다시 시도, 나머지는 처리 완료로 기록
-        for (const x of found) { const tmp = x.status === 'error' && /읽지 못했어요|NAS에서|분석 중 오류/.test(x.error || ''); if (!tmp) seen[x.path] = x.sig; }
+        for (const x of found) { const tmp = x.status === 'error' && /읽지 못했어요|NAS에서|분석 중 오류/.test(x.error || ''); if (!tmp) { if (x.krPair) x.krPair.forEach(k => seen[k.path] = k.sig); else seen[x.path] = x.sig; } }
         // 확인이 필요한 것만 대기열에 남겨서 보여줌
         S.queue = manual.concat(found.filter(x => issues.some(i => i.path === x.path)));
         S.lastCheck = found.map(x => x.check).filter(Boolean);
@@ -3370,9 +3850,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       seenSet(seen);
       if (geoMig && srcs.some(([r]) => r === 'en') && !S.walkErrors.length && !S.sync.needPerm.length) { try { localStorage.setItem('iw_geo_mig', '1'); } catch (e) { } }
       S.sync.last = new Date().toISOString();
-      S.sync.issues = issues;
+      S.sync.issues = issues.concat(S._futureIssues || []); S._futureIssues = [];
       if (saved.length) { S.sync.lastSaved = { n: saved.length, at: S.sync.last }; if (!opts.report) toast(`⟳ 자동 업데이트: ${saved.length}일 반영${IWCloud.isEditor() ? ' · 폰에도 반영' : ''}`, 6000); }
-      else if (issues.length && !opts.report) toast(`⟳ 자동 업데이트: 확인할 것 ${issues.length}개 — 저장하지 않았어요`, 6000);
+      else if (issues.length && !opts.report) toast(`⟳ 자동 업데이트: 검토 항목 ${issues.length}개 — 저장하지 않았어요`, 6000);
       if (opts.report) showReport({ saved, skipped: unchanged, saved_: saved });
       else { renderPill(); if (['home', 'input', 'report', 'calendar'].includes(S.view)) render(); }
     } finally { S.sync.running = false; }
@@ -3381,7 +3861,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     if (S.source === 'cloud' || !Object.values(S.srcHandles).some(Boolean)) return '';
     if (S.sync.needPerm.length) return `<div class="warnbox" style="margin-bottom:14px;border:2px solid var(--warn)"><b>자동 업데이트가 멈춰 있어요</b> · 크롬을 다시 열어서 파일 접근 허용이 필요해요: ${S.sync.needPerm.map(esc).join(', ')}
       <div style="margin-top:8px"><button class="btn primary sm" id="syncResume">자동 업데이트 다시 켜기</button> <span class="muted small">허용 창에서 "방문할 때마다 허용"을 고르면 다음부터 안 물어봐요</span></div></div>`;
-    if (S.sync.issues.length) return `<div class="badbox" style="margin-bottom:14px"><b>자동 업데이트에서 확인할 것 ${S.sync.issues.length}개</b> (이 파일들은 저장하지 않았어요)<ul style="margin:6px 0 0;padding-left:18px">${S.sync.issues.slice(0, 5).map(i => `<li><b>${esc(i.path.split('/').pop())}</b>: ${esc(i.msg)}</li>`).join('')}</ul>${S.view !== 'input' ? `<div style="margin-top:8px"><button class="btn sm" id="syncGoInput">데이터 입력에서 보기</button></div>` : ''}</div>`;
+    if (S.sync.issues.length) return `<div class="badbox" style="margin-bottom:14px"><b>자동 업데이트 검토 항목 ${S.sync.issues.length}개</b> (이 파일들은 저장하지 않았어요)<ul style="margin:6px 0 0;padding-left:18px">${S.sync.issues.slice(0, 5).map(i => `<li><b>${esc(i.path.split('/').pop())}</b>: ${esc(i.msg)}</li>`).join('')}</ul>${S.view !== 'input' ? `<div style="margin-top:8px"><button class="btn sm" id="syncGoInput">데이터 입력에서 보기</button></div>` : ''}</div>`;
     return '';
   }
   function syncLine() {
@@ -3448,6 +3928,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
   function go(v) { S.view = v; document.querySelectorAll('.navbtn').forEach(x => x.classList.toggle('on', x.dataset.view === v)); render(); }
 
+  function srcRowsHtml() {
+    const hint = { en: 'Daily DB 폴더(★영어권 › DB)', kr: '홍보팀 주간 통합 엑셀 — 국내·영어권 공식 숫자', krA: '강남언니·바비톡·홈페이지 명부 엑셀', krB: '전화·플친 월별 DB 엑셀 (26년 11월 같은 시트)', jp: 'DB 폴더(★일본 › DB) — 안의 월 폴더까지 읽어요' };
+    const row = (k, first) => { const h = S.srcHandles[k], v = SRC[k];
+      return `<div class="row srcrow" style="margin:${first ? 10 : 4}px 0 4px;flex-wrap:wrap">${first ? `<span class="tag ${v.region}" style="min-width:70px;justify-content:center">${REGIONS[v.region].label}</span>` : '<span style="min-width:70px"></span>'}
+        <span class="small" style="flex:1;min-width:160px"><b>${esc(v.label.replace(/^(국내|일본어권|영어권)\s*/, '') || v.label)}</b> ${h ? `· ${esc(h.name)} <span class="muted">${h.kind === 'file' ? '파일' : '폴더'} 연결됨</span>` : `<span class="muted">· ${hint[k]}</span>`}</span>
+        <button class="btn sm ${h ? '' : 'primary'}" data-src="${k}">${h ? '바꾸기' : v.file ? '파일 연결' : '폴더 연결'}</button>${h ? `<button class="btn sm ghost" data-unsrc="${k}" title="연결 해제">✕</button>` : ''}${k === 'jp' ? `<button class="btn sm" id="jpUpload" title="일본어권 엑셀을 직접 골라서 넣기 (여러 개 가능)">엑셀 올리기</button><input type="file" id="jpFileInput" multiple accept=".xlsx,.xls,.xlsm,.xlsb" class="hide">` : ''}</div>`; };
+    const kr = S.srcHandles.krA || S.srcHandles.krB;
+    const krNote = kr ? `<div class="small muted" style="margin:2px 0 6px 78px">${S.srcHandles.krA && S.srcHandles.krB ? '주간 통합 파일에 아직 없는 날(이번 주)을 원본 두 파일로 매일 채워요. 주간 파일이 들어오면 그 숫자로 바뀌어요.' : '<b style="color:var(--warn)">명부와 전화·플친 두 파일을 모두 연결해야</b> 하루치가 맞게 들어가요.'}</div>` : '';
+    return row('en', true) + row('kr', true) + row('krA') + row('krB') + krNote + row('jp', true);
+  }
   function renderInput() {
     setAccent('en');
     const q = S.queue;
@@ -3457,10 +3947,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="topbar"><h1><small>Input</small>데이터 입력</h1>${oneClickBtn()}</div>
     <div class="grid g2">
       <div class="card"><h3>NAS 폴더에서 불러오기</h3>
-        <p class="muted small" style="margin-top:0">권역별 DB 폴더를 한 번 연결해두면, 버튼 하나로 <b>새로 생기거나 수정된 파일만</b> 골라서 가져와요.</p>
-        ${Object.entries(REGIONS).map(([r, v]) => { const h = S.srcHandles[r]; const isFile = r === 'kr'; return `<div class="row" style="margin:8px 0"><span class="tag ${r}" style="min-width:70px;justify-content:center">${v.label}</span>
-          <span class="small" style="flex:1">${h ? `<b>${esc(h.name)}</b> <span class="muted">${h.kind === 'file' ? '파일' : '폴더'} 연결됨</span>` : `<span class="muted">${r === 'jp' ? 'DB 제작 전' : isFile ? '주간 통합 엑셀(국내+영미 시트, 팀장님 정리본) 파일을 연결하세요 — 이 파일 하나로 국내·영어권이 같이 들어가요' : 'Daily DB 폴더(★영어권 › DB)를 연결하세요'}</span>`}</span>
-          ${r === 'jp' ? '' : `<button class="btn sm ${h ? '' : 'primary'}" data-src="${r}">${h ? '바꾸기' : isFile ? '파일 연결' : '폴더 연결'}</button>`}</div>`; }).join('')}
+        <p class="muted small" style="margin-top:0">한 번 연결해두면 직원이 엑셀을 <b>저장할 때마다</b> 앱이 알아서 읽어요 (2분마다 확인).</p>
+        ${srcRowsHtml()}
         <label class="small row" style="margin-top:10px"><input type="checkbox" id="autoSync" ${syncOn() ? 'checked' : ''}> <b>자동 업데이트</b> — 앱이 열려 있는 동안 2분마다 확인해서, 바뀐 파일만 읽고 저장·폰 반영까지 자동으로 해요</label>
         <div class="row" style="margin-top:8px"><button class="btn sm" id="syncNow" ${Object.values(S.srcHandles).some(Boolean) ? '' : 'disabled'}>지금 확인</button><span class="small muted">${syncLine().replace(/<[^>]+>/g, ' ')}</span></div>
         <label class="small row" style="margin-top:10px"><input type="checkbox" id="rescanAll" ${S.rescanAll ? 'checked' : ''}> 변경 없는 파일도 전부 다시 분석 (부위 규칙을 바꾼 뒤에 사용)</label>
@@ -3468,7 +3956,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </div>
       <div class="drop" id="drop">
         <div class="big">폴더나 엑셀을 여기로 끌어다 놓기</div>
-        <p><b>영어권</b>: Daily DB 월별 폴더(예: 26.10)째 넣기<br><b>국내권</b>: 홍보팀 주간 통합 엑셀(예: (국내) 10월 2주차 시트가 있는 파일) 넣기 · 자동 인식</p>
+        <p><b>영어권</b>: Daily DB 월별 폴더(예: 26.10)째 넣기<br><b>국내권</b>: 주간 통합 엑셀, 또는 명부 + 전화·플친 DB 두 파일 같이 넣기<br><b>일본어권</b>: 날짜 파일(11.11 등)이나 월 폴더(11월)째 넣기 · 모두 자동 인식</p>
         <div class="row" style="justify-content:center;margin-bottom:12px"><span class="small">경로로 권역을 모를 때 적용할 권역</span><select id="dropRegion">${Object.entries(REGIONS).map(([k, v]) => `<option value="${k}" ${S.dropRegion === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
         <div class="row" style="justify-content:center"><button class="btn" id="pickDir">폴더 선택</button><button class="btn" id="pickFile">파일 선택</button></div>
         <input type="file" id="dirInput" webkitdirectory multiple class="hide"><input type="file" id="fileInput" multiple accept=".xlsx,.xls,.xlsm,.xlsb" class="hide">
@@ -3522,7 +4010,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const sum = Object.entries(by).filter(([, a]) => a.length).map(([k, a]) => { const t = a.reduce((s, r) => s + r.total, 0), rv = a.reduce((s, r) => s + r.resv, 0); return `<span class="tag ${k}">${REGIONS[k].label}</span> ${a.length}일 · 문의 <b>${t}</b>${a.some(r => r.hasResv && r.resv) ? ` · 예약 ${rv}` : ''}`; }).join('<br>');
     const span = x.records.length ? `${x.records[0].date} ~ ${x.records[x.records.length - 1].date}` : '';
     return `<tr class="flagged"><td><input type="checkbox" data-inc="${x.id}" ${x.include ? 'checked' : ''}></td><td class="small" style="max-width:240px;word-break:break-all">${esc(x.path)}</td>
-      <td colspan="2" class="small"><b>주간 통합 DB</b><br><span class="muted">${span}</span></td><td class="small">${sum}${checkHtml(x.check)}</td>
+      <td colspan="2" class="small"><b>${x.rawKr ? '국내 원본 DB (임시 집계)' : '주간 통합 DB'}</b><br><span class="muted">${span}</span></td><td class="small">${sum}${checkHtml(x.check)}</td>
       <td class="small">${replace ? `${replace}일 교체` : ''}${replace && x.records.length - replace ? '<br>' : ''}${x.records.length - replace ? `${x.records.length - replace}일 새로 추가` : ''}</td>
       <td class="small"><details><summary>${x.notes.length}개</summary><ul>${x.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></details></td><td><button class="btn sm ghost" data-rm="${x.id}">✕</button></td></tr>`;
   }
@@ -3547,13 +4035,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       const r = b.dataset.src;
       try {
         let h;
-        if (r === 'kr') [h] = await window.showOpenFilePicker({ id: 'iw-src-kr', multiple: false, types: [{ description: '엑셀', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'], 'application/vnd.ms-excel': ['.xls', '.xlsb'] } }] });
+        if (SRC[r].file) [h] = await window.showOpenFilePicker({ id: 'iw-src-' + r, multiple: false, types: [{ description: '엑셀', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'], 'application/vnd.ms-excel': ['.xls', '.xlsb'] } }] });
         else h = await window.showDirectoryPicker({ id: 'iw-src-' + r, mode: 'read' });
         S.srcHandles[r] = h; await IWStore.setSource(r, h);
-        toast(`${REGIONS[r].label} 연결: ${h.name} — 바로 확인할게요`);
+        toast(`${srcLabel(r)} 연결: ${h.name} — 바로 확인할게요`);
         await autoSyncOnce({ force: true, report: true });
-      } catch (e) { showFsError(e, 'read', `${REGIONS[r].label} 연결 실패`); }
+      } catch (e) { showFsError(e, 'read', `${srcLabel(r)} 연결 실패`); }
     });
+    document.querySelectorAll('[data-unsrc]').forEach(b => b.onclick = async () => {
+      const r = b.dataset.unsrc; if (!(await ask(`${srcLabel(r)} 연결을 해제할까요? (이미 저장된 통계는 그대로예요)`))) return;
+      delete S.srcHandles[r]; try { await IWStore.setSource(r, null); } catch (e) { } render();
+    });
+    const ju = $('#jpUpload'); if (ju) { ju.onclick = () => $('#jpFileInput').click(); $('#jpFileInput').onchange = e => { const fs = [...e.target.files]; e.target.value = ''; addFiles(fs.map(f => ({ file: f, path: f.name })), { region: 'jp' }); }; }
     $('#autoSync').onchange = e => { localSet('autosync', e.target.checked ? '1' : '0'); renderPill(); if (e.target.checked) autoSyncOnce(); };
     $('#syncNow').onclick = () => { autoSyncOnce({ force: true, report: true }); };
     bindSurgery();
@@ -3580,6 +4073,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     const lines = [];
     progressOpen('분석 중', `0 / ${todo.length}`);
     let i = 0;
+    S._batch = S.queue;
     for (const x of todo) {
       i++;
       try { await analyzeOne(x, lines); }
@@ -3588,6 +4082,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       progressSet(i, todo.length, `${i} / ${todo.length} · ${x.path.split('/').pop()}`, l ? `${esc(l.d.slice(5))} <span class="ch">[${esc(l.ch)}]</span> ${esc(l.nm || '-')} · ${esc(l.ct || '-')} · <span class="pt">${esc(l.pt || '부위미상')}</span>` : (x.status === 'error' ? `<span style="color:#FF9C9C">${esc(x.path.split('/').pop())}: ${esc(x.error)}</span>` : ''));
       if (i % 3 === 0 || todo.length < 30) await new Promise(r => setTimeout(r, todo.length < 30 ? 60 : 0));
     }
+    if (todo.some(o => o.rawKr || o.kind === 'weekly')) await rerunKrRaw(S.queue, lines);
     if (!opts.keepOpen) { await new Promise(r => setTimeout(r, 300)); progressClose(); render(); }
   }
   function fileKind(b) {
@@ -3608,6 +4103,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     catch (e) { x.status = 'error'; x.error = (/password|encrypt/i.test(e.message) || sig === 'ole') ? '암호화된 파일이에요 (문서 보안 프로그램/DRM 또는 암호). 브라우저에서는 열 수 없어요' : `엑셀로 읽지 못했어요 (${sig}): ${e.message}`; return; }
     if (sig !== 'xlsx' && sig !== 'ole' && wb.SheetNames.length <= 1) { x.status = 'error'; x.error = sig === 'drm' ? '문서 보안 프로그램(DRM)으로 잠긴 파일이에요. 브라우저에서는 내용을 읽을 수 없어요' : `엑셀 파일이 아니에요 (파일 종류: ${sig})`; return; }
     if (IW.isWeeklyWorkbook(wb)) { analyzeWeekly(x, wb, lines); return; }
+    if (x.krPair || IW.isKrRawWorkbook(XLSX, wb)) { await analyzeKrRaw(x, wb); return; }
+    if (x.region === 'jp' || (x.regionGuess && IW.isJapanWorkbook(XLSX, wb))) { x.region = 'jp'; analyzeJapan(x, wb, lines); return; }
     if (IWSurg.isSurgeryWorkbook(wb)) { x.status = 'error'; x.error = '수술 DB 파일이에요 — 데이터 입력 화면의 "수술 DB" 칸에서 파일 연결로 넣어주세요 (문의 통계에는 넣지 않았어요)'; return; }
     // 문의 DB 형식인지 먼저 확인 (주간 통합 시트도, 인쇄/채널 시트도 없으면 다른 종류의 파일)
     const probe = IW.parseEnglishWorkbook(XLSX, wb, S.settings);
@@ -3615,7 +4112,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       const sn = wb.SheetNames.slice(0, 8).join(', ') + (wb.SheetNames.length > 8 ? ' …' : '');
       const surg = wb.SheetNames.some(n => /원장|수술|일별통계/.test(n));
       x.status = 'error';
-      x.error = `문의 DB 형식이 아니에요${surg ? ' (수술 부위 통계 파일로 보여요)' : ''}. 국내는 "(국내) ○월 ○주차" 시트가 있는 주간 통합 파일, 영어권은 Daily DB 파일을 넣어주세요 · 이 파일의 시트: ${sn}`;
+      x.error = `문의 DB 형식이 아니에요${surg ? ' (수술 부위 통계 파일로 보여요)' : ''}. 국내는 주간 통합 파일 또는 명부·전화플친 DB, 영어권·일본어권은 Daily DB 파일을 넣어주세요 · 이 파일의 시트: ${sn}`;
       return;
     }
     // Daily DB(인쇄 시트) 형식은 영어권 전용 → 권역을 추측으로 정했으면 영어권으로 바로잡기
@@ -3629,7 +4126,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       return;
     }
     if (!x.region) { x.status = 'error'; x.error = '권역을 선택하세요'; return; }
-    if (x.region !== 'en') { x.status = 'error'; x.error = `${REGIONS[x.region].label}은 Daily DB가 아니라 홍보팀 주간 통합 엑셀로 넣어주세요`; return; }
+    if (x.region !== 'en') { x.status = 'error'; x.error = `${REGIONS[x.region].label} 형식으로 읽을 수 없는 파일이에요 (국내는 주간 통합 파일 또는 명부·전화플친 DB)`; return; }
     const parsed = IW.parseEnglishWorkbook(XLSX, wb, S.settings);
     if (parsed.errors && parsed.errors.length) { x.status = 'error'; x.error = parsed.errors.join(' / ') + ` · 시트: ${wb.SheetNames.slice(0, 12).join(', ')}${wb.SheetNames.length > 12 ? ' …' : ''}`; return; }
     const rec = IW.buildRecord(parsed, { date: x.date, region: x.region, warnings: x.dateWarn, rangeDates: x.dates, source: { path: x.path, name: x.file.name, lastModified: x.file.lastModified, size: x.file.size } }, S.settings);
@@ -3668,6 +4165,99 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     x.record = rec; x.status = 'done';
     parsed.inquiries.slice(0, 2).forEach(q => lines.push({ d: x.date, ch: q.channel, nm: IW.maskName(q.name), ct: q.contact ? IW.maskContact(q.contact) : '', pt: q.part }));
   }
+  /* ---------- 일본어권 Daily DB (하루 한 파일: 11.11.xlsx) ---------- */
+  function analyzeJapan(x, wb, lines) {
+    const parsed = IW.parseJapanWorkbook(XLSX, wb, S.settings);
+    if (parsed.errors.length) { x.status = 'error'; x.error = parsed.errors.join(' / ') + ` · 시트: ${wb.SheetNames.slice(0, 8).join(', ')}`; return; }
+    if (!x.date) { x.status = 'error'; x.error = `파일 이름에서 날짜를 못 찾았어요 ("${x.file.name}" — 11.11처럼 월.일 이름이어야 해요)`; return; }
+    const dw = (x.dateWarn || []).filter(w => !/폴더 이름이 없어 연도/.test(w));   // 일본어권은 월 폴더(11월)라 연도는 늘 자동 판단
+    const rec = IW.buildRecord(parsed, { date: x.date, region: 'jp', parser: 'jp-v1', warnings: dw, rangeDates: x.dates, source: { path: x.path, name: x.file.name, lastModified: x.file.lastModified, size: x.file.size } }, S.settings);
+    if (x.dates && x.dates.length > 1) { rec.range = { dates: x.dates, label: x.rangeLabel }; rec.warnings.unshift(`${x.rangeLabel} (${x.dates.length}일) 문의가 한 파일 → 첫날에 합산해 저장`); }
+    if (IW.dow(x.date) === 0) { rec.warnings.unshift(rec.empty ? '일요일 파일' : '일요일인데 데이터가 있음: 파일명 날짜를 확인하세요'); x.include = false; }
+    if (rec.empty) { x.include = false; rec.warnings.unshift('문의 0건 (아직 미입력이면 저장 안 함 · 실제 0건이면 체크해서 저장)'); }
+    x.record = rec; x.status = 'done';
+    parsed.inquiries.slice(0, 2).forEach(q => lines.push({ d: x.date, ch: q.channel, nm: IW.maskName(q.name), ct: '', pt: q.part }));
+  }
+
+  /* ---------- 국내 원본 DB (플랫폼 명부 + 전화·플친) → 주간 통합 파일에 아직 없는 날만 임시로 채움 ---------- */
+  // 같은 묶음에서 방금 읽은(아직 저장 전) 주간 통합 파일 기록
+  function pendingWeekly() {
+    const m = {}; for (const o of (S._batch || [])) if (o.kind === 'weekly' && !o.rawKr && o.records) for (const r of o.records) if (r.region === 'kr' && !r.empty) m[r.key || `${r.date}|kr`] = r;
+    return m;
+  }
+  // 원본 DB를 주간 파일보다 먼저 읽었으면, 주간 파일을 반영해 원본 쪽을 한 번 더 계산
+  async function rerunKrRaw(list, lines) {
+    if (!list.some(o => o.kind === 'weekly' && !o.rawKr && o.records)) return;
+    for (const o of list) if (o.rawKr && o.records && o.records.length) { try { await analyzeOne(o, lines); } catch (e) { o.status = 'error'; o.error = '분석 중 오류: ' + e.message; } }
+  }
+  function krWindow() {
+    const today = todayStr(); let from = IW.addDays(today, -45);
+    const pw = pendingWeekly();
+    const wk = Object.values(S.records).filter(r => r.region === 'kr' && r.parser === 'weekly-v1' && !r.empty).map(r => r.date).concat(Object.values(pw).map(r => r.date)).sort().pop() || null;
+    if (wk && IW.addDays(wk, 1) > from) from = IW.addDays(wk, 1);
+    return { from, to: today, weeklyLast: wk };
+  }
+  // 주간 통합 파일의 하루가 아직 덜 옮겨졌는지: 원본 DB엔 3건 이상 있는 채널이 주간 파일엔 0건
+  function krIncomplete(wk, raw) {
+    if (!wk || !raw) return null;
+    const miss = Object.entries(raw.channels || {}).filter(([c, n]) => n >= 3 && !((wk.channels || {})[c])).map(([c, n]) => `${c} 0/원본 ${n}`);
+    return miss.length ? miss : null;
+  }
+  async function analyzeKrRaw(x, wb) {
+    const W = krWindow(), PW = pendingWeekly(), po = { today: W.to, from: W.from.slice(0, 8) + '01' };
+    const P = {}, names = {}, srcs = [];
+    const take = (p, f, path) => { if (p && !p.errors && p.kind && !P[p.kind]) { P[p.kind] = p; names[p.kind] = f.name; srcs.push({ path, name: f.name, lastModified: f.lastModified, size: f.size }); } };
+    const readWb = async f => XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    // 이번에 바뀐 파일(들)
+    if (x.krPair) { for (const k of x.krPair) { try { take(IW.parseKrRaw(XLSX, k.file === x.file ? wb : await readWb(k.file), S.settings, po), k.file, k.path); } catch (e) { x.status = 'error'; x.error = `${k.path}: 파일을 읽지 못했어요 (${e.name || e.message}) — 다음 확인 때 다시 시도`; return; } } }
+    else take(IW.parseKrRaw(XLSX, wb, S.settings, po), x.file, x.path);
+    // 짝 파일: 대기열에서 먼저 읽은 것 → 연결된 파일 순서로 찾음
+    for (const kind of ['platform', 'call']) {
+      if (P[kind]) continue;
+      const q = S.queue.find(o => o !== x && o.krParsed && o.krParsed.kind === kind);
+      if (q) { take(q.krParsed, q.file, q.path); q.include = false; q.status = 'done'; q.error = null; q.kind = 'weekly'; q.rawKr = true; q.records = []; q.notes = ['짝 파일과 함께 아래 줄에서 반영']; continue; }
+      const h = S.srcHandles[kind === 'platform' ? 'krA' : 'krB'];
+      if (h) { try { if ((await h.queryPermission({ mode: 'read' })) === 'granted') { const f = await h.getFile(); take(IW.parseKrRaw(XLSX, await readWb(f), S.settings, po), f, h.name); } } catch (e) { x.status = 'error'; x.error = `${h.name}: 읽지 못했어요 (${e.name}) — 다음 확인 때 다시 시도`; return; } }
+    }
+    const nm = { platform: '플랫폼 명부(강남언니·바비톡·홈페이지)', call: '전화·플친 DB' };
+    if (!P.platform || !P.call) {
+      const have = P.platform ? 'platform' : 'call', miss = have === 'platform' ? 'call' : 'platform';
+      x.krParsed = P[have]; x.status = 'error';
+      x.error = `${nm[have]} 파일이에요. 국내 하루치는 ${nm.platform}와 ${nm.call} 두 파일을 합쳐야 맞아서, ${nm[miss]} 파일도 같이 넣거나 연결해주세요`;
+      return;
+    }
+    // 두 파일 모두 적힌 날까지만 (한쪽이 아직 입력 전인 날은 숫자가 모자라니까 기다림)
+    const upto = [P.platform.last, P.call.last, W.to].filter(Boolean).sort()[0];
+    const recs = [], notes = [], dels = [];
+    notes.push(`국내 원본 DB로 인식: ${names.platform} + ${names.call}`);
+    notes.push(W.weeklyLast ? `주간 통합 파일은 ${W.weeklyLast}까지 있어서, 그 다음 날(${W.from})부터 원본 DB로 채움` : `주간 통합 파일 기록이 없어 최근 45일(${W.from}~)을 원본 DB로 채움`);
+    notes.push(`명부는 ${P.platform.last || '-'}까지, 전화·플친은 ${P.call.last || '-'}까지 적혀 있어 ${upto}까지 반영${upto < W.to ? ` (그 뒤는 두 파일 모두 적히면 자동 반영)` : ''}`);
+    const start = W.weeklyLast && IW.addDays(W.weeklyLast, -6) < W.from ? IW.addDays(W.weeklyLast, -6) : W.from;   // 주간 파일 마지막 한 주는 덜 옮겨진 날이 있는지 확인
+    for (let d = start; d <= upto; d = IW.addDays(d, 1)) {
+      const inq = (P.platform.days[d] || []).concat(P.call.days[d] || []);
+      const key = `${d}|kr`, old = PW[key] || S.records[key];
+      let over = null;
+      if (old && old.parser === 'weekly-v1' && !old.empty) {
+        if (IW.dow(d) === 0 || !inq.length) continue;
+        over = krIncomplete(old, IW.buildRecord({ inquiries: inq, warnings: [] }, { date: d, region: 'kr' }, S.settings));
+        if (!over) continue;
+        notes.push(`${d}: 주간 통합 파일에 아직 덜 옮겨진 것으로 보여요 (${over.join(', ')}) → 원본 DB 숫자로 임시 반영, 주간 파일이 다 채워지면 그 숫자로 바뀌어요`);
+      } else if (d < W.from && !(old && old.parser === 'kr-raw-v1')) continue;
+      if (IW.dow(d) === 0) { if (inq.length) notes.push(`${d}(일) 문의 ${inq.length}건 — 휴진일이라 저장 안 함`); continue; }
+      if (!inq.length) { if (old && old.parser === 'kr-raw-v1') dels.push(key); continue; }
+      const rec = IW.buildRecord({ inquiries: inq, warnings: [] }, { date: d, region: 'kr', parser: 'kr-raw-v1', source: { path: '국내 원본 DB', name: `${names.platform} + ${names.call}`, files: srcs } }, S.settings);
+      rec.warnings = rec.warnings.map(w => w.replace('분류 안 된 부위:', '기타부위로 센 단어:'));
+      rec.warnings.unshift('국내 원본 DB 기준 임시 집계 — 주간 통합 파일에 이 날이 들어오면 그 숫자로 바뀌어요');
+      if (over) { rec.overWeekly = true; rec.warnings.unshift(`주간 통합 파일의 이 날은 아직 덜 옮겨짐 (${over.join(', ')})`); }
+      recs.push(rec);
+    }
+    const ws = P.platform.warnings.concat(P.call.warnings);
+    if (ws.length) notes.push(...ws.slice(0, 12), ...(ws.length > 12 ? [`그 밖의 안내 ${ws.length - 12}개`] : []));
+    x.kind = 'weekly'; x.rawKr = true; x.records = recs; x.deletes = dels; x.notes = notes; x.check = null;
+    x.status = 'done';
+    if (!recs.length && !dels.length) { x.include = false; notes.push(`새로 반영할 날이 없어요 (주간 통합 파일이 ${W.weeklyLast || '-'}까지 있고, 원본 DB는 ${upto}까지)`); }
+    x.date = null; x.region = null;
+  }
   // 영어권 Daily DB와 주간 통합 파일 숫자 비교 (다르면 짧은 설명, 같으면 '')
   function dailyDiff(daily, weekly) {
     const out = [];
@@ -3690,7 +4280,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       const daily = S.records[rec.key] && S.records[rec.key].parser !== 'weekly-v1' ? S.records[rec.key] : null;
       { const old = S.records[rec.key]; if (old && old.geo) { rec.countries = old.countries; rec.geo = old.geo; rec.geoFrom = old.geoFrom || (old.source && old.source.name); } }   // 주간 파일엔 연락처가 없어 국가 정보는 Daily DB 것을 유지
       if (rec.empty) { if (daily) keptDaily++; else empty++; continue; }   // 주간 파일에 아직 안 옮긴 날은 Daily DB 기록을 그대로 둠
-      if (daily) { replacedDaily++; const df = dailyDiff(daily, rec); if (df) { diffDaily.push(`${d.date.slice(5)} (${df})`); rec.warnings.unshift(`NAS Daily DB와 숫자가 다름: ${df} → 주간 통합 파일(팀장 정리본) 기준으로 저장`); } }
+      if (daily && daily.parser === 'kr-raw-v1') { const inc = krIncomplete(rec, daily); if (inc) { notes.push(`${d.date}: 주간 파일에 아직 덜 옮겨짐 (${inc.join(', ')}) → 국내 원본 DB 숫자를 유지`); continue; } }
+      if (daily) { replacedDaily++; const df = dailyDiff(daily, rec); const dn = daily.parser === 'kr-raw-v1' ? '국내 원본 DB(임시)' : 'NAS Daily DB'; if (df) { diffDaily.push(`${d.date.slice(5)} (${df})`); rec.warnings.unshift(`${dn}와 숫자가 다름: ${df} → 주간 통합 파일(팀장 정리본) 기준으로 저장`); } }
       recs.push(rec);
       d.inquiries.slice(0, 2).forEach(q => lines.push({ d: d.date, ch: q.channel, nm: q.resv ? '예약' : '', ct: q.cost ? '비용' : '', pt: q.part }));
     }
@@ -3711,9 +4302,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       if (c.diffs.length) chk.bad.push(c); else chk.ok++;
     }
     x.check = chk;
-    if (replacedDaily) notes.push(`영어권 ${replacedDaily}일은 Daily DB 기록 대신 주간 통합 파일 숫자로 저장 (영어권 공식 기준 = 주간 통합 파일)`);
-    if (diffDaily.length) notes.push(`⚠ Daily DB와 숫자가 다른 날 ${diffDaily.length}일: ${diffDaily.join(', ')}`);
-    if (keptDaily) notes.push(`영어권 ${keptDaily}일은 주간 파일에 아직 비어 있어 Daily DB 기록을 그대로 둠`);
+    if (replacedDaily) notes.push(`${replacedDaily}일은 Daily DB·원본 DB 기록 대신 주간 통합 파일 숫자로 저장 (공식 기준 = 주간 통합 파일)`);
+    if (diffDaily.length) notes.push(`⚠ Daily DB·원본 DB와 숫자가 다른 날 ${diffDaily.length}일: ${diffDaily.join(', ')}`);
+    if (keptDaily) notes.push(`${keptDaily}일은 주간 파일에 아직 비어 있어 Daily DB·원본 DB 기록을 그대로 둠`);
     if (empty) notes.push(`아직 입력되지 않은 빈 날 ${empty}일은 저장하지 않음`);
     x.kind = 'weekly'; x.records = recs; x.notes = notes.concat(res.warnings); x.status = (recs.length || x.deletes.length) ? 'done' : 'error';
     if (!recs.length && !x.deletes.length) x.error = '저장할 날짜가 없어요';
@@ -3738,10 +4329,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     for (const r of sel.flatMap(x => x.records || [x.record])) {
       const ex = byKey.get(r.key);
       // 같은 날짜·권역이 Daily DB와 주간 엑셀에 둘 다 있으면 주간 통합 파일(팀장 정리본, 요약표 대조 완료)을 우선
-      if (ex && ex.parser === 'weekly-v1' && r.parser !== 'weekly-v1') continue;
-      if (r.parser !== 'weekly-v1' && S.records[r.key] && S.records[r.key].parser === 'weekly-v1' && !S.records[r.key].empty) continue;
+      if (ex && ex.parser === 'weekly-v1' && r.parser !== 'weekly-v1' && !r.overWeekly) continue;
+      if (ex && ex.overWeekly && r.parser === 'weekly-v1') continue;   // 주간 파일에 덜 옮겨진 날은 원본 DB 숫자를 우선
+      if (r.parser !== 'weekly-v1' && !r.overWeekly && S.records[r.key] && S.records[r.key].parser === 'weekly-v1' && !S.records[r.key].empty) continue;
       byKey.set(r.key, r);
     }
+    // 오늘보다 미래 날짜는 저장하지 않음 (파일 이름 날짜 실수·미리 만든 파일 대비)
+    const today = todayStr(), future = [...byKey.values()].filter(r => r.date > today);
+    future.forEach(r => byKey.delete(r.key));
+    if (future.some(r => !r.empty)) { const fl = future.filter(r => !r.empty); S._futureIssues = fl.map(r => ({ path: (r.source && r.source.name) || r.date, msg: `${r.date} (${REGIONS[r.region].label}) — 오늘보다 미래 날짜라 저장하지 않았어요. 파일 이름의 날짜를 확인해주세요` })); S.sync.issues = (S.sync.issues || []).concat(S._futureIssues); toast(`미래 날짜 ${fl.length}일은 저장하지 않았어요 — 파일 이름 날짜를 확인해주세요`, 7000); }
     const who = IWCloud.enabled() && IWCloud.signedIn() && !IWCloud.quiet ? IWCloud.email() : '';   // 관리자 계정은 저장한 사람에 안 남김
     const recs = [...byKey.values()].map(r => Object.assign({}, r, { savedAt: now, savedBy: who || undefined, savedAsZero: r.empty ? true : undefined }));
     const delKeys = [...new Set(sel.flatMap(x => x.deletes || []))].filter(k => S.records[k] && !byKey.has(k));
@@ -4080,6 +4676,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   }
   window.addEventListener('resize', () => { clearTimeout(navThumb._t); navThumb._t = setTimeout(() => { for (const k in SEGPOS) delete SEGPOS[k]; afterRenderMotion(); }, 150); });
   function render() {
+    try { IW.setResvRegions(Object.keys(REGIONS).filter(r => usedFields(r).resv)); } catch (e) { }
     const needLogin = IWCloud.enabled() && !IWCloud.signedIn() && !S.skipLogin;
     document.querySelector('nav.side').classList.toggle('hide', needLogin);
     document.body.classList.toggle('viewer', S.source === 'cloud');
@@ -4133,8 +4730,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     document.addEventListener('visibilitychange', () => { if (!document.hidden) autoSyncOnce(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDataUpdate(); });
     setInterval(checkDataUpdate, 5 * 60000);
-    for (const r of Object.keys(REGIONS)) { const h = await IWStore.getSource(r); if (h) S.srcHandles[r] = h; }
-    try { S.surgHandle = await IWStore.getSource('sx'); } catch (e) { }
+    for (const r of Object.keys(SRC)) { const h = await IWStore.getSource(r); if (h) S.srcHandles[r] = h; }
+    try { const sx = await IWStore.getSource('sx'); S.surgSrc = Array.isArray(sx) ? sx : sx ? [sx] : []; } catch (e) { S.surgSrc = []; }
     setInterval(() => surgSync(), SYNC_MS);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) surgSync(); });
     await reload();
